@@ -44,7 +44,7 @@ ENDR
 
 .x\@
 FOR T, 0, 64
-	db X_INTRO_N0 - T + I * 8
+	db X_INTRO_0 - T + I * 8
 ENDR
 	ds 64, 0
 
@@ -77,13 +77,13 @@ ENDR
 
 .x\@
 FOR T, 0, 96
-	db LOW(X_INTRO_N0 - T * 4 + I * 8)
+	db LOW(X_INTRO_0 - T * 4 + I * 8)
 ENDR
 	ds 32, 0
 
 .tile\@
 FOR T, 0, 96
-	db T_INTRO_N0 + ((T & 7) << 2) + I * 2
+	db T_INTRO_0 + ((T & 7) << 2) + I * 2
 ENDR
 	ds 32, 0
 
@@ -102,12 +102,12 @@ ENDR
 
 .x
 FOR T, 0, 128
-	db LOW(X_INTRO_I - T * 3)
+	db LOW(X_INTRO_1 - T * 3)
 ENDR
 
 .tile
 FOR T, 0, 128
-	db T_INTRO_I + ((T & 7) << 1)
+	db T_INTRO_1 + ((T & 7) << 1)
 ENDR
 
 .attrs
@@ -127,13 +127,13 @@ ENDR
 
 .x\@
 FOR T, 0, 64
-	db LOW(X_INTRO_N1 - T * 2 + I * 8)
+	db LOW(X_INTRO_2 - T * 2 + I * 8)
 ENDR
 	ds 64, 0
 
 .tile\@
 FOR T, 0, 64
-	db T_INTRO_N1 + (((T >> 1) & 7) << 2) + I * 2
+	db T_INTRO_2 + (((T >> 1) & 7) << 2) + I * 2
 ENDR
 	ds 64, 0
 
@@ -153,12 +153,12 @@ ENDR
 
 .x
 FOR T, 0, 128
-	db X_INTRO_T - T
+	db X_INTRO_3 - T
 ENDR
 
 .tile
 FOR T, 0, 128
-	db T_INTRO_T + (((T >> 2) & 7) << 1)
+	db T_INTRO_3 + (((T >> 2) & 7) << 1)
 ENDR
 
 .attrs
@@ -175,12 +175,12 @@ ENDR
 
 .x\@
 FOR T, 0, 128
-	db LOW(X_INTRO_D + T * 3 + I * 8)
+	db LOW(X_INTRO_4 + T * 3 + I * 8)
 ENDR
 
 .tile\@
 FOR T, 0, 128
-	db T_INTRO_D + (((T >> 1) & 7) << 2) + I * 2
+	db T_INTRO_4 + (((T >> 1) & 7) << 2) + I * 2
 ENDR
 
 .filags\@
@@ -200,12 +200,12 @@ ENDR
 
 .x\@
 FOR T, 0, 128
-	db LOW(X_INTRO_O + T * 4 + I * 8)
+	db LOW(X_INTRO_5 + T * 4 + I * 8)
 ENDR
 
 .tile\@
 FOR T, 0, 128
-	db T_INTRO_O + ((T & 7) << 2) + I * 2
+	db T_INTRO_5 + ((T & 7) << 2) + I * 2
 ENDR
 
 .attrs\@

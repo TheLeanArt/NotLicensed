@@ -34,7 +34,7 @@ MACRO INTRO_TOP_INIT
 ENDM
 
 MACRO INTRO_BOTTOM_INIT
-FOR I, 0, INTRO_BOTTOM_\1_WIDTH
+FOR I, 0, INTRO_\1_WIDTH
 	ld [hl], d                 ; Set Y
 	inc l                      ; Advance to X
 	ld a, X_INTRO_\1 + I * 8   ; Load X
@@ -318,16 +318,14 @@ InitReg:
 	ret
 
 InitBottom:
-	ld hl, wShadowOAM + OBJ_INTRO_N0 * OBJ_SIZE
-	ld b, T_INTRO_N0
-	ld de, Y_INTRO_BOTTOM << 8 | X_INTRO_N0
+	ld hl, wShadowOAM + OBJ_INTRO_0 * OBJ_SIZE
+	ld b, T_INTRO_0
+	ld de, Y_INTRO_BOTTOM << 8 | X_INTRO_0
 	call SetTwoObjects16
-	
-	INTRO_BOTTOM_INIT I
-	INTRO_BOTTOM_INIT N1
-	INTRO_BOTTOM_INIT T
-	INTRO_BOTTOM_INIT D
-	INTRO_BOTTOM_INIT O
+
+FOR I, 1, 6
+	INTRO_BOTTOM_INIT {d:I}
+ENDR
 	ret
 
 SetTwoObjects16:
