@@ -416,3 +416,13 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Game Boy
+*.1bpp
+*.2bpp
+*.tilemap
+*.o
+*.map
+*.sym
+*.gb
+*.gbc
