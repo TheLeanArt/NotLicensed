@@ -18,11 +18,11 @@ OBJS = \
 	src/oamdma.o \
 	
 INC = \
-	inc\hardware.inc \
-	inc\common.inc \
+	inc/hardware.inc \
+	inc/common.inc \
 
 INTRO_INC = \
-	inc\intro.inc \
+	inc/intro.inc \
 
 INTRO_1BPP = \
 	art/intro/intro_not.1bpp \
