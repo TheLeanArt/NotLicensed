@@ -395,5 +395,5 @@ IntroTiles:
 	INCBIN "intro_o.1bpp"
 	INCBIN "intro_n.1bpp"
 	INCBIN "intro_e.1bpp"
-	ds 256, 0
+	ds 128, 0
 .end

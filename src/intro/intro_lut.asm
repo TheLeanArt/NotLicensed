@@ -67,6 +67,8 @@ TOP_LUT 5,  3
 TOP_LUT 6,  5
 TOP_LUT 7,  7
 
+N0_LUT:
+
 FOR I, 0, 2
 
 .y\@
@@ -133,12 +135,23 @@ ENDR
 
 .tile\@
 FOR T, 0, 64
-	db T_INTRO_2 + (((T >> 1) & 7) << 2) + I * 2
+IF (T >> 1) & 4 == 0
+	db T_INTRO_2 + (((T >> 1) & 3) << 2) + I * 2
+ELSE
+	db T_INTRO_2 + (((T >> 1) & 3) << 2) + 3 - I * 2
+ENDC
 ENDR
 	ds 64, 0
 
 .attrs\@
-	ds 128, 0
+FOR I, 0, 64
+IF (T >> 1) & 4 == 0
+	db 0
+ELSE
+	db OAMF_XFLIP
+ENDC
+ENDR
+	ds 64, 0
 
 ENDR
 
@@ -180,11 +193,21 @@ ENDR
 
 .tile\@
 FOR T, 0, 128
-	db T_INTRO_4 + (((T >> 1) & 7) << 2) + I * 2
+IF (T >> 1) & 4 == 0
+	db T_INTRO_4 + (((T >> 1) & 3) << 2) + I * 2
+ELSE
+	db T_INTRO_4 + (((T >> 1) & 3) << 2) + 3 - I * 2
+ENDC
 ENDR
 
-.filags\@
-	ds 128, 0
+.attrs\@
+FOR T, 0, 128
+IF (T >> 1) & 4 == 0
+	db 0
+ELSE
+	db OAM_XFLIP
+ENDC
+ENDR
 
 ENDR
 
@@ -205,14 +228,25 @@ ENDR
 
 .tile\@
 FOR T, 0, 128
-	db T_INTRO_5 + ((T & 7) << 2) + I * 2
+IF (T & 4) == 0
+	db T_INTRO_5 + ((T & 3) << 2) + I * 2
+ELSE
+	db T_INTRO_5 + ((T & 3) << 2) + 3 - I * 2
+ENDC
 ENDR
 
 .attrs\@
-	ds 128, 0
+FOR T, 0, 128
+IF (T & 4) == 0
+	db 0
+ELSE
+	db OAM_XFLIP
+ENDC
 ENDR
 
 ASSERT (LOW(@) == 0)
+
+ENDR
 
 SCY_LUT:
 FOR T, 0, 128
