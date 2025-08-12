@@ -3,7 +3,6 @@
 ; Copyright (c) 2025 Dmitry Shechtman
 
 
-DEF BOOTUP_C_SGB         EQU $14
 DEF BOOTUP_B_DMG0        EQU $FF
 
 DEF MAP_LOGO             EQU TILEMAP0
