@@ -39,7 +39,7 @@ FOR I, 0, INTRO_\1_WIDTH
 	inc l                      ; Advance to X
 	ld a, X_INTRO_\1 + I * 8   ; Load X
 	ld [hli], a                ; Set X
-	ld a, T_INTRO_\1 + I       ; Load tile ID
+	ld a, T_INTRO_\1 + I * 2   ; Load tile ID
 	ld [hli], a                ; Set tile ID
 	xor a                      ; Set A to zero
 	ld [hli], a                ; Set attributes
