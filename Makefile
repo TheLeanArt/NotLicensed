@@ -8,7 +8,7 @@ TARGET = demo.gb
 SYM = demo.sym
 
 RGBLINKFLAGS = -n $(SYM)
-RGBFIXFLAGS  = -v -p 0xFF -t $(TITLE)
+RGBFIXFLAGS  = -v -p 0xFF -t $(TITLE) -c
 RGBASMFLAGS  = -I inc -I art -I art/intro
 
 OBJS = \

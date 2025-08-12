@@ -68,6 +68,8 @@ EntryPoint:
 	set B_INTRO_FLAGS_SGB, c   ; Otherwise, set the SGB flag
 
 .cont
+	cp BOOTUP_C_CGB            ; Are we running on GBC?
+	call z, SetPalettes        ; If yes, set palettes
 	ld a, b                    ; Load the value of B
 	cp BOOTUP_B_DMG0           ; Are we running on DMG0?
 	jr nz, .setFlags           ; If not, proceed to set the flags
@@ -344,6 +346,24 @@ SetObject16:
 	inc b
 	inc b
 	xor a
+	ld [hli], a
+	ret
+
+SetPalettes:
+	ld hl, rBGPI
+	call SetPalette
+	; Fall through
+
+SetPalette:
+	ld a, BGPI_AUTOINC
+	ld [hli], a
+	ld a, $FF
+	ld [hl], a
+	ld [hl], a
+	cpl
+REPT 5
+	ld [hl], a
+ENDR
 	ld [hli], a
 	ret
 
