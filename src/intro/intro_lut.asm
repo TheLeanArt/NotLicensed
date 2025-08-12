@@ -44,7 +44,7 @@ ENDR
 
 .x\@
 FOR T, 0, 64
-	db X_INTRO_0 - T + I * 8
+	db X_INTRO_TOP - T + I * 8
 ENDR
 	ds 64, 0
 
