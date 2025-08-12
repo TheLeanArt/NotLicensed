@@ -107,7 +107,7 @@ ENDR
 
 .tile
 FOR T, 0, 128
-	db T_INTRO_1 + ((T & 7) << 1)
+	db T_INTRO_1 + ((T & 3) << 1)
 ENDR
 
 .attrs
@@ -158,7 +158,7 @@ ENDR
 
 .tile
 FOR T, 0, 128
-	db T_INTRO_3 + (((T >> 2) & 7) << 1)
+	db T_INTRO_3 + (((T >> 2) & 3) << 1)
 ENDR
 
 .attrs

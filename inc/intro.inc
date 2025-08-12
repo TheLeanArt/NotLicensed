@@ -63,15 +63,15 @@ DEF T_INTRO_NOT          EQU T_INTRO_REG       +  8
 DEF T_INTRO_TOP_0        EQU T_INTRO_NOT       +  4
 DEF T_INTRO_BY           EQU $3C
 
-DEF T_INTRO_N            EQU $C0
-DEF T_INTRO_E            EQU $E0
+DEF T_INTRO_N            EQU $B0
+DEF T_INTRO_E            EQU $D0
 
 DEF T_INTRO_0            EQU $40
 DEF T_INTRO_1            EQU $60
 DEF T_INTRO_2            EQU T_INTRO_N
-DEF T_INTRO_3            EQU $70
-DEF T_INTRO_4            EQU $80
-DEF T_INTRO_5            EQU $A0
+DEF T_INTRO_3            EQU $68
+DEF T_INTRO_4            EQU $70
+DEF T_INTRO_5            EQU $90
 
 DEF T_INTRO_N2           EQU T_INTRO_N
 
