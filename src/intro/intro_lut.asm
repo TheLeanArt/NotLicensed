@@ -224,13 +224,7 @@ FOR T, 0, 128
 	db -T
 ENDR
 
-E_LUT:
-FOR T, 0, 128
-	db T_INTRO_E + ((T >> 3) & 7) << 2
-ENDR
-
-.reserved
-	ds 128
+ASSERT (LOW(@) == 0)
 
 WY_LUT:
 FOR T, 0, 64
@@ -243,9 +237,14 @@ FOR T, 0, 128
 	db LOW(X_INTRO_N2 + T * 2)
 ENDR
 
-ASSERT (LOW(@) == 0)
+E_LUT:
+FOR T, 0, 128
+	db T_INTRO_E + ((T >> 3) & 7) << 2
+ENDR
 
 N2_LUT:
 FOR T, 0, 128
 	db T_INTRO_N2 + ((T >> 2) & 7) << 2
 ENDR
+
+ASSERT (LOW(@) == 0)

@@ -216,14 +216,18 @@ ENDR
 	dec b                      ; Decrement the page counter
 	jr nz, .pageLoop           ; Continue to loop until the end
 
-	ld hl, MAP_INTRO_E + TILEMAP_WIDTH * ROW_INTRO_E + COL_INTRO_E
 	ld c, LOW(rSCY)            ; Start from the screen's Y coordinate
 	call SetOddball            ; Update the background's coordinates + E's tiles
-	inc d
 
-	ld hl, MAP_INTRO_N2        ; Set the address to N2
 	ld c, LOW(rWY)             ; Start from the background's Y coordinate
 	call SetOddball            ; Update the window's coordinates + N2's tiles
+
+	ld hl, MAP_INTRO_E + ROW_INTRO_E * TILEMAP_WIDTH + COL_INTRO_E
+	call SetOddballMetaTile
+	set 7, e                   ; Advance to the second half-page
+	ld hl, MAP_INTRO_N2 + ROW_INTRO_N2 * TILEMAP_WIDTH + COL_INTRO_N2
+	call SetOddballMetaTile
+	res 7, e
 
 	call hFixedOAMDMA          ; Prevent lag
 	inc e                      ; Increment the step counter
@@ -245,7 +249,10 @@ SetOddball:
 	ld a, [de]                 ; Load the X value
 	ldh [c], a                 ; Set the X coordinate
 	res 7, e                   ; Go back to the first half-page
-	inc d                      ; Advance to the next page
+	inc d
+	ret
+
+SetOddballMetaTile:
 	ld a, [de]
 	; Fall through
 
