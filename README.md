@@ -10,7 +10,7 @@ The demo consists of three separate scenes:
 
 1. "Not licensed by" dropping from above.
 2. ® falling down.
-3. Everything flies away.
+3. Everything flying away.
 
 The 10 sprite-per-scanline limitation is overcome in the third scene by rendering two letters on the background (`e`) and on the window (2nd `n`).
 
