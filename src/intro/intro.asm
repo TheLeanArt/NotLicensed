@@ -9,6 +9,7 @@ include "intro.inc"
 
 MACRO INTRO_META_INIT
 	ld hl, MAP_INTRO_\1 + ROW_INTRO_\1 * TILEMAP_WIDTH + COL_INTRO_\1
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld a, T_INTRO_\1           ; Load top left tile ID
 	ld [hli], a                ; Set top left tile and advance to the right
 	ld a, T_INTRO_\1 + 2       ; Load top right tile ID
@@ -51,12 +52,12 @@ ENDM
 ; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 
 SECTION "Start", ROM0[$0100]
-    di                         ; Disable interrupts during setup
-    jr EntryPoint              ; Jump past the header space to our actual code
-    ds $150 - @, 0             ; Allocate space for RGBFIX to insert our ROM header
+	di                         ; Disable interrupts during setup
+	jr EntryPoint              ; Jump past the header space to our actual code
+	ds $150 - @, 0             ; Allocate space for RGBFIX to insert our ROM header
 
 EntryPoint:
-    ld sp, $E000               ; Set the stack pointer to the end of WRAM
+	ld sp, $E000               ; Set the stack pointer to the end of WRAM
 
 	xor a
 	ldh [rAUDENA], a           ; Shut down audio circuitry
@@ -104,17 +105,9 @@ EntryPoint:
 	cp OAM_SIZE                ; End of OAM reached?
 	jr nz, .clearOAMLoop       ; If not, continue looping
 
-.waitVBlank
-    ldh a, [rLY]               ; Read the LY register to check the current scanline
-    cp SCREEN_HEIGHT_PX        ; Compare the current scanline to the first scanline of VBlank
-    jr c, .waitVBlank          ; Loop as long as the carry flag is set
-
-	xor a                      ; Once we exit the loop we're safely in VBlank
-	ldh [rLCDC], a             ; Disable the LCD (must be done during VBlank to protect the LCD)
-
 	ld de, IntroTiles
 	ld hl, STARTOF(VRAM) | T_INTRO_REG << 4
-	COPY_1BPP Intro
+	COPY_1BPP_SAFE Intro
 
 	call ClearBackground       ; Clear the logo from the background
 	INTRO_META_INIT BY         ; Draw BY on the background
@@ -275,8 +268,9 @@ ClearBackground:
 
 ClearLogo:
 	ld c, LOGO_WIDTH + 1       ; Clear ®
-	xor a
 .loop
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	xor a
 	ld [hli], a
 	dec c
 	jr nz, .loop
@@ -290,7 +284,7 @@ ClearWindow:
 
 SetWindow:
 	ld hl, TILEMAP1 + 4
-	ld a, T_LOGO
+	ld b, T_LOGO
 	call .logo
 	ld l, TILEMAP_WIDTH + 4
 	; Fall through
@@ -298,8 +292,10 @@ SetWindow:
 .logo:
 	ld c, LOGO_WIDTH
 .loop
-	ld [hli], a
-	inc a
+	rst WaitVRAM
+	ld [hl], b
+	inc l
+	inc b
 	dec c
 	jr nz, .loop
 	ret
