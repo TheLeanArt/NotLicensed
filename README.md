@@ -24,5 +24,6 @@ make
 
 * [KULI](https://leanart.itch.io/kuli)
 * [Still Got the Blues](https://leanart.itch.io/sgb)
+* [The Late Demo](https://leanart.itch.io/latedemo)
 
 Feel free to use in your project (but consider dropping me a line).
