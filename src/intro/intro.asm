@@ -107,7 +107,8 @@ EntryPoint:
 
 	ld de, IntroTiles
 	ld hl, STARTOF(VRAM) | T_INTRO_REG << 4
-	COPY_1BPP_SAFE Intro
+	COPY_1BPP_SAFE Intro       ; Copy 1bpp tiles
+	COPY_0_5BPP_SAFE Intro2    ; Copy 0.5bpp tiles
 
 	call ClearBackground       ; Clear the logo from the background
 	INTRO_META_INIT BY         ; Draw BY on the background
@@ -384,12 +385,28 @@ IntroTiles:
 	INCBIN "intro_not.1bpp"
 	INCBIN "intro_top.1bpp"
 	INCBIN "intro_by.1bpp"
-	INCBIN "intro_n0.1bpp"
-	INCBIN "intro_i.1bpp"
-	INCBIN "intro_t.1bpp"
-	INCBIN "intro_d.1bpp"
-	INCBIN "intro_o.1bpp"
-	INCBIN "intro_n.1bpp"
-	INCBIN "intro_e.1bpp"
-	ds 128, 0
+.end
+
+Intro2Tiles:
+FOR I, 0, 256, 2
+	INCBIN "intro_n0.1bpp", I, 1
+ENDR
+FOR I, 0, 64, 2
+	INCBIN "intro_i.1bpp", I, 1
+ENDR
+FOR I, 0, 64, 2
+	INCBIN "intro_t.1bpp", I, 1
+ENDR
+FOR I, 0, 128, 2
+	INCBIN "intro_d.1bpp", I, 1
+ENDR
+FOR I, 0, 128, 2
+	INCBIN "intro_o.1bpp", I, 1
+ENDR
+FOR I, 0, 256, 2
+	INCBIN "intro_n.1bpp", I, 1
+ENDR
+FOR I, 0, 256, 2
+	INCBIN "intro_e.1bpp", I, 1
+ENDR
 .end
