@@ -7,7 +7,7 @@
 DEF BOOTUP_B_DMG0        EQU $FF
 
 DEF B_FLAGS_SGB          EQU   0
-DEF B_FLAGS_DMG0         EQU   1
+DEF B_FLAGS_DMG0         EQU   4
 
 
 ; Adapted from Simple GB ASM Examples by Dave VanEe

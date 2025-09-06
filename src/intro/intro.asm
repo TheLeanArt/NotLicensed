@@ -91,12 +91,7 @@ EntryPoint:
 	dec b                      ; Decrement the loop counter in B
 	jr nz, .copyOAMDMAloop     ; If B isn't zero, continue looping
 
-	; Initialize our objects before disabling the LCD to reduce flicker
-	call InitTop
-
-	ldh a, [hFlags]            ; Load our flags into the A register
-	bit B_FLAGS_DMG0, a        ; Are we running on DMG0?
-	call z, InitReg            ; If not, draw ®
+	call InitTop               ; Initialize our objects
 
 .clearOAMLoop
 	xor a                      ; Set A to zero
@@ -122,6 +117,8 @@ EntryPoint:
 
 	ld a, %11_11_01_00         ; Display dark gray as black
 	ldh [rOBP0], a             ; Set the default object palette
+	xor a                      ; Display everything as white
+	ldh [rOBP1], a             ; Set the alternate object palette
 	
 	ld a, IE_VBLANK            ; Load the flag to enable the VBlank and STAT interrupts into A
 	ldh [rIE], a               ; Load the prepared flag into the interrupt enable register
@@ -310,7 +307,7 @@ InitTop:
 FOR I, 8
 	INTRO_TOP_INIT {d:I}
 ENDR
-	ret
+	; Fall through
 
 InitReg:
 	ld a, Y_INTRO_REG          ; Load the Y value
@@ -319,7 +316,9 @@ InitReg:
 	ld [hli], a                ; Set the X coordinate
 	ld a, T_INTRO_REG          ; Load the tile ID
 	ld [hli], a                ; Store tile ID
-	xor a                      ; Set A to zero
+ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
+	ldh a, [hFlags]            ; Load our flags into the A register
+	and 1 << B_FLAGS_DMG0      ; Isolate the DMG0 flag
 	ld [hli], a                ; Set attributes
 	ret
 
