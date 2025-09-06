@@ -6,10 +6,6 @@
 ; https://github.com/gbdev/hardware.inc/pull/75
 DEF BOOTUP_B_DMG0        EQU $FF
 
-DEF MAP_LOGO             EQU TILEMAP0
-DEF COL_LOGO             EQU   4
-DEF ROW_LOGO             EQU   8
-
 
 ; Adapted from Simple GB ASM Examples by Dave VanEe
 ; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)

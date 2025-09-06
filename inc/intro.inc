@@ -18,6 +18,10 @@ DEF INTRO_3_WIDTH        EQU   1
 DEF INTRO_4_WIDTH        EQU   2
 DEF INTRO_5_WIDTH        EQU   2
 
+DEF MAP_LOGO             EQU TILEMAP0
+DEF COL_LOGO             EQU   4
+DEF ROW_LOGO             EQU   8
+
 DEF MAP_INTRO_BY         EQU TILEMAP0
 DEF ROW_INTRO_BY         EQU   6
 DEF COL_INTRO_BY         EQU  13
