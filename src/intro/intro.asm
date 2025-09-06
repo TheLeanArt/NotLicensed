@@ -277,22 +277,22 @@ ClearLogo:
 	ret
 
 ClearWindow:
-	ld hl, TILEMAP1 + 4
+	ld hl, TILEMAP1 + COL_LOGO
 	call ClearLogo
-	ld l, TILEMAP_WIDTH + 4
+	ld l, TILEMAP_WIDTH + COL_LOGO
 	jr ClearLogo
 
 SetWindow:
-	ld hl, TILEMAP1 + 4
+	ld hl, TILEMAP1 + COL_LOGO
 	ld b, T_LOGO
 	call .logo
-	ld l, TILEMAP_WIDTH + 4
+	ld l, TILEMAP_WIDTH + COL_LOGO
 	; Fall through
 
 .logo:
 	ld c, LOGO_WIDTH
 .loop
-	rst WaitVRAM
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld [hl], b
 	inc l
 	inc b
