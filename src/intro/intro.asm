@@ -66,7 +66,7 @@ EntryPoint:
 	ld c, 0                    ; Clear the C register
 	cp BOOTUP_C_SGB            ; Are we running on SGB?
 	jr nz, .cont               ; If not, skip
-	set B_INTRO_FLAGS_SGB, c   ; Otherwise, set the SGB flag
+	set B_FLAGS_SGB, c         ; Otherwise, set the SGB flag
 
 .cont
 	cp BOOTUP_C_CGB            ; Are we running on GBC?
@@ -74,11 +74,11 @@ EntryPoint:
 	ld a, b                    ; Load the value of B
 	cp BOOTUP_B_DMG0           ; Are we running on DMG0?
 	jr nz, .setFlags           ; If not, proceed to set the flags
-	set B_INTRO_FLAGS_DMG0, c  ; Otherwise, set the DMG0 flag
+	set B_FLAGS_DMG0, c        ; Otherwise, set the DMG0 flag
 
 .setFlags
 	ld a, c                    ; Load the flags into A
-	ldh [hIntroFlags], a       ; Set our flags
+	ldh [hFlags], a            ; Set our flags
 
 	; Load the length of the OAMDMA routine into B
     ; and the low byte of the destination into C
@@ -94,8 +94,8 @@ EntryPoint:
 	; Initialize our objects before disabling the LCD to reduce flicker
 	call InitTop
 
-	ldh a, [hIntroFlags]       ; Load our flags into the A register
-	bit B_INTRO_FLAGS_DMG0, a  ; Are we running on DMG0?
+	ldh a, [hFlags]            ; Load our flags into the A register
+	bit B_FLAGS_DMG0, a        ; Are we running on DMG0?
 	call z, InitReg            ; If not, draw ®
 
 .clearOAMLoop
@@ -133,9 +133,9 @@ EntryPoint:
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_OBJ_16 | LCDC_WIN_ON | LCDC_WIN_9C00
 	ldh [rLCDC], a             ; Enable and configure the LCD
 
-	ldh a, [hIntroFlags]       ; Load our flags into the A register
+	ldh a, [hFlags]            ; Load our flags into the A register
 	ld c, a                    ; Store the flags in the C register
-	bit B_INTRO_FLAGS_SGB, a   ; Are we running on SGB?
+	bit B_FLAGS_SGB, a         ; Are we running on SGB?
 	jr z, .drop                ; If not, skip the SGB delay
 
 	ld b, INTRO_SGB_DELAY      ; ~1 sec delay to make up for the SGB bootup animation
@@ -169,7 +169,7 @@ EntryPoint:
 	ld a, [de]                 ; Load the window's Y value
 	ldh [rWY], a               ; Set the Y coordinate
 
-	bit B_INTRO_FLAGS_DMG0, c  ; Are we running on DMG0?
+	bit B_FLAGS_DMG0, c        ; Are we running on DMG0?
 	jr nz, .regDone            ; If yes, skip the ® object
 
 REPT 4
@@ -374,7 +374,7 @@ ENDR
 
 SECTION "Intro Flags", HRAM
 
-hIntroFlags:
+hFlags:
 	ds 1
 
 

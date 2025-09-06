@@ -3,9 +3,6 @@
 ; Copyright (c) 2025 Dmitry Shechtman
 
 
-DEF B_INTRO_FLAGS_SGB    EQU   0
-DEF B_INTRO_FLAGS_DMG0   EQU   1
-
 DEF INTRO_SGB_DELAY      EQU $80
 
 DEF INTRO_TOP_SLIM_WIDTH EQU   3
