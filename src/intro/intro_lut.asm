@@ -85,12 +85,22 @@ ENDR
 
 .tile\@
 FOR T, 0, 96
-	db T_INTRO_0 + ((T & 7) << 2) + I * 2
+IF (T & 4) == 0
+	db T_INTRO_0 + ((T & 3) << 2) + I * 2
+ELSE
+	db T_INTRO_0 + ((T & 3) << 2) + 3 - I * 2
+ENDC
 ENDR
 	ds 32, 0
 
 .attrs\@
-	ds 128, 0
+FOR T, 0, 128
+IF (T & 4) == 0
+	db 0
+ELSE
+	db OAM_XFLIP
+ENDC
+ENDR
 
 ASSERT (LOW(@) == 0)
 

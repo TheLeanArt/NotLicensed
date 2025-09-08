@@ -387,7 +387,7 @@ IntroTiles:
 .end
 
 Intro2Tiles:
-FOR I, 0, 256, 2
+FOR I, 0, 128, 2
 	INCBIN "intro_n0.1bpp", I, 1
 ENDR
 FOR I, 0, 64, 2
