@@ -13,7 +13,7 @@ RGBASMFLAGS  = -I inc -I art -I art/intro
 
 OBJS = \
 	src/start.o \
-	src/intro/intro.o \
+	src/intro/intro_main.o \
 	src/intro/intro_drop.o \
 	src/intro/intro_lut.o \
 	src/oamdma.o \
@@ -47,7 +47,7 @@ $(TARGET): $(OBJS)
 	$(RGBLINK) $(RGBLINKFLAGS) $^ -o $@
 	$(RGBFIX) $(RGBFIXFLAGS) $@
 
-src/intro/intro.o: src/intro/intro.asm $(INC) $(INTRO_1BPP)
+src/intro/intro_main.o: src/intro/intro_main.asm $(INC) $(INTRO_1BPP)
 
 src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
 	$(RGBASM) $(RGBASMFLAGS) $< -o $@
