@@ -52,9 +52,7 @@ jobs:
       - name: Build ROMs
         run: |
           cd src
-          for d in */; do
-            ( cd $d && ../build.sh *.asm ) || break
-          done
+          make
       - name: Upload built ROMs
         uses: actions/upload-artifact@v4
         with:
