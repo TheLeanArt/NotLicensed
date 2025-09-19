@@ -10,7 +10,7 @@ SYM = demo.sym
 RGBLINKFLAGS = -n $(SYM)
 RGBFIXFLAGS  = -v -p 0xFF -t $(TITLE) -c
 RGBASMFLAGS  = -I inc -I art
-RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro
+RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro #-D EN_UK
 
 OBJS = \
 	src/start.o \

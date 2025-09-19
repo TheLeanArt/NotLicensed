@@ -7,18 +7,13 @@ include "common.inc"
 include "intro.inc"
 
 
-MACRO INTRO_META_INIT
+MACRO INTRO_DBL_INIT
 	ld hl, MAP_INTRO_\1 + ROW_INTRO_\1 * TILEMAP_WIDTH + COL_INTRO_\1
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ld a, T_INTRO_\1           ; Load top left tile ID
-	ld [hli], a                ; Set top left tile and advance to the right
-	ld a, T_INTRO_\1 + 2       ; Load top right tile ID
-	ld [hld], a                ; Set top right tile and go back to the left
-	set 5, l                   ; Move to second row
-	dec a                      ; Base + 1
-	ld [hli], a                ; Set bottom left tile and advance to the right
-	ld a, T_INTRO_\1 + 3       ; Load bottom right tile ID
-	ld [hl], a                 ; Set bottom right tile
+	ld a, T_INTRO_\1           ; Load left tile ID
+	ld [hli], a                ; Set left tile and advance to the right
+	inc a                      ; Base + 1
+	ld [hl], a                 ; Set right tile
 ENDM
 
 MACRO INTRO_TOP_INIT
@@ -26,10 +21,8 @@ MACRO INTRO_TOP_INIT
 	inc l                      ; Advance to X
 	ld a, X_INTRO_TOP_\1       ; Load X
 	ld [hli], a                ; Set X
-	ld [hl], b                 ; Set tile ID
-	inc l                      ; Advance to attributes
-	inc b                      ; Advance tile ID
-	inc b                      ; ...
+	ld a, T_INTRO_TOP_\1       ; Load tile ID
+	ld [hli], a                ; Set tile ID
 	xor a                      ; Set A to zero
 	ld [hli], a                ; Set attributes
 ENDM
@@ -51,20 +44,21 @@ Intro::
 	jr nz, .clearOAMLoop       ; If not, continue looping
 
 	ld de, IntroTiles
-	ld hl, STARTOF(VRAM) | T_INTRO_REG << 4
+	ld hl, STARTOF(VRAM) | T_INTRO_START << 4
 	COPY_1BPP_SAFE Intro       ; Copy 1bpp tiles
 
 	call ClearBackground       ; Clear the logo from the background
-	INTRO_META_INIT BY         ; Draw BY on the background
+	INTRO_DBL_INIT BY          ; Draw BY on the background
 	call SetWindow             ; Draw the logo on the window
 
 	ld a, Y_INTRO_TOP          ; Load the initial Y value into A
 	ldh [rSCY], a              ; Set the background's Y coordinate
+	ld a, Y_INTRO_WINDOW       ; Load the initial WY value into A
 	ldh [rWY], a               ; Set the window's Y coordinate
 	ld a, WX_OFS               ; Load the window's X value into A
 	ldh [rWX], a               ; Set the window's X coordinate
 
-	ld a, %11_11_01_00         ; Display dark gray as black
+	ld a, %11_11_11_00         ; Display everything as black
 	ldh [rOBP0], a             ; Set the default object palette
 	xor a                      ; Display everything as white
 	ldh [rOBP1], a             ; Set the alternate object palette
@@ -76,7 +70,7 @@ Intro::
 
 	call VBlank                ; Perform our OAM DMA and enable interrupts!
 
-	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_OBJ_16 | LCDC_WIN_ON | LCDC_WIN_9C00
+	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_WIN_ON | LCDC_WIN_9C00
 	ldh [rLCDC], a             ; Enable and configure the LCD
 
 	ldh a, [hFlags]            ; Load our flags into the A register
@@ -174,7 +168,7 @@ InitTop:
 	ld hl, wShadowOAM + OBJ_INTRO_NOT * OBJ_SIZE
 	ld b, T_INTRO_NOT
 	ld de, Y_INTRO_INIT << 8 | X_INTRO_TOP
-	call SetTwoObjects16
+	call SetTwoObjects
 
 FOR I, 8
 	INTRO_TOP_INIT {d:I}
@@ -194,11 +188,11 @@ ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
 	ld [hli], a                ; Set attributes
 	ret
 
-SetTwoObjects16:
-	call SetObject16
+SetTwoObjects:
+	call SetObject
 	; Fall through
 
-SetObject16:
+SetObject:
 	ld a, d
 	ld [hli], a
 	ld a, e
@@ -207,7 +201,6 @@ SetObject16:
 	ld e, a
 	ld a, b
 	ld [hli], a
-	inc b
 	inc b
 	xor a
 	ld [hli], a
@@ -232,7 +225,7 @@ ENDR
 	ret
 
 
-SECTION "Intro Tile data", ROM0, ALIGN[8]
+SECTION "Intro Tile data", ROM0
 
 IntroTiles:
 	INCBIN "intro_reg.1bpp"
