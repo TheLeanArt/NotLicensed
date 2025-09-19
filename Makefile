@@ -16,7 +16,6 @@ OBJS = \
 	src/start.o \
 	src/intro/intro_main.o \
 	src/intro/intro_drop.o \
-	src/intro/intro_lut.o \
 	src/oamdma.o \
 	
 INC = \
@@ -31,13 +30,6 @@ INTRO_1BPP = \
 	art/intro/intro_top.1bpp \
 	art/intro/intro_by.1bpp \
 	art/intro/intro_reg.1bpp \
-	art/intro/intro_n0.1bpp \
-	art/intro/intro_i.1bpp \
-	art/intro/intro_n.1bpp \
-	art/intro/intro_t.1bpp \
-	art/intro/intro_e.1bpp \
-	art/intro/intro_d.1bpp \
-	art/intro/intro_o.1bpp \
 
 all: $(TARGET)
 
