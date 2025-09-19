@@ -47,7 +47,7 @@ $(TARGET): $(OBJS)
 	$(RGBLINK) $(RGBLINKFLAGS) $^ -o $@
 	$(RGBFIX) $(RGBFIXFLAGS) $@
 
-src/intro/intro_main.o: src/intro/intro_main.asm $(INC) $(INTRO_1BPP)
+src/intro/intro_main.o: src/intro/intro_main.asm $(INC) $(INTRO_INC) $(INTRO_1BPP)
 
 src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
 	$(RGBASM) $(RGBASMFLAGS) $< -o $@
