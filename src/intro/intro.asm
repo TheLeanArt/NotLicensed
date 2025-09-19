@@ -48,48 +48,11 @@ ENDR
 ENDM
 
 
-; Initialization portion adapted from Simple GB ASM Examples by Dave VanEe
-; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
-
-SECTION "Start", ROM0[$0100]
-	di                         ; Disable interrupts during setup
-	jr EntryPoint              ; Jump past the header space to our actual code
-	ds $150 - @, 0             ; Allocate space for RGBFIX to insert our ROM header
-
-EntryPoint:
-	ld sp, $E000               ; Set the stack pointer to the end of WRAM
-
-	xor a
-	ldh [rAUDENA], a           ; Shut down audio circuitry
-
-	ld a, c                    ; Load the value of C
-	ld c, 0                    ; Clear the C register
-	cp BOOTUP_C_SGB            ; Are we running on SGB?
-	jr nz, .cont               ; If not, skip
-	set B_FLAGS_SGB, c         ; Otherwise, set the SGB flag
-
-.cont
-	cp BOOTUP_C_CGB            ; Are we running on GBC?
-	call z, SetPalettes        ; If yes, set palettes
-	ld a, b                    ; Load the value of B
-	cp BOOTUP_B_DMG0           ; Are we running on DMG0?
-	jr nz, .setFlags           ; If not, proceed to set the flags
-	set B_FLAGS_DMG0, c        ; Otherwise, set the DMG0 flag
-
-.setFlags
-	ld a, c                    ; Load the flags into A
-	ldh [hFlags], a            ; Set our flags
-
-	; Load the length of the OAMDMA routine into B
-    ; and the low byte of the destination into C
-	ld bc, (FixedOAMDMA.end - FixedOAMDMA) << 8 | LOW(hFixedOAMDMA)
-	ld hl, FixedOAMDMA         ; Load the source address of our routine into HL
-.copyOAMDMAloop
-	ld a, [hli]                ; Load a byte from the address HL points to into the register A, increment HL
-	ldh [c], a                 ; Load the byte in the A register to the address in HRAM with the low byte stored in C
-	inc c                      ; Increment the low byte of the HRAM pointer in C
-	dec b                      ; Decrement the loop counter in B
-	jr nz, .copyOAMDMAloop     ; If B isn't zero, continue looping
+SECTION "Intro", ROM0
+Intro::
+	ldh a, [hFlags]            ; Load our flags into the A register
+	bit B_FLAGS_GBC, a         ; Are we running on GBC?
+	call nz, SetPalettes       ; If yes, set palettes
 
 	call InitTop               ; Initialize our objects
 
@@ -369,12 +332,6 @@ REPT 5
 ENDR
 	ld [hli], a
 	ret
-
-
-SECTION "Intro Flags", HRAM
-
-hFlags:
-	ds 1
 
 
 SECTION "Intro Tile data", ROM0, ALIGN[8]

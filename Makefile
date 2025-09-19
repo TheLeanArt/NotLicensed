@@ -12,6 +12,7 @@ RGBFIXFLAGS  = -v -p 0xFF -t $(TITLE) -c
 RGBASMFLAGS  = -I inc -I art -I art/intro
 
 OBJS = \
+	src/start.o \
 	src/intro/intro.o \
 	src/intro/intro_drop.o \
 	src/intro/intro_lut.o \
