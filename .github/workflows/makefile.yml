@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: Check that all examples build correctly
+    name: Check that the ROM builds correctly
     strategy:
       matrix:
         os:
@@ -51,16 +51,13 @@ jobs:
           rgbasm --version
       - name: Build ROMs
         run: |
-          cd src
-          for d in */; do
-            ( cd $d && ../build.sh *.asm ) || break
-          done
+          make
       - name: Upload built ROMs
         uses: actions/upload-artifact@v4
         with:
           name: Built ROMs
           path: |
-            src/*/*.gb
-            src/*/*.sym
-            src/*/*.map
+            *.gb
+            *.sym
+            *.map
         if: "!startsWith(matrix.os, 'windows')"
