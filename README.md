@@ -23,6 +23,7 @@ make
 ## Deployments
 
 * [KULI](https://leanart.itch.io/kuli)
+* [Shlimazl](https://leanart.itch.io/shlimazl) ([drop-only](https://github.com/TheLeanArt/NotLicensed/tree/drop-only)+EN_GB+colour)
 * [Still Got the Blues](https://leanart.itch.io/sgb)
 * [The Late Demo](https://leanart.itch.io/latedemo)
 
