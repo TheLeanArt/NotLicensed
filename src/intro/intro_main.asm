@@ -63,9 +63,11 @@ Intro::
 	cp OAM_SIZE                ; End of OAM reached?
 	jr nz, .clearOAMLoop       ; If not, continue looping
 
-	ld de, IntroTiles
-	ld hl, STARTOF(VRAM) | T_INTRO_REG << 4
-	COPY_1BPP_SAFE Intro       ; Copy 1bpp tiles
+	ld de, RegTiles
+	ld hl, (STARTOF(VRAM) | T_INTRO_REG << 4 | $100) - 8
+	COPY_1BPP_TOP_SAFE Reg     ; Copy the ® tiles
+	ld l, LOW(T_INTRO_NOT << 4); Advance to the beginning of the next tile
+	COPY_1BPP_TOP_SAFE Top     ; Copy the top tiles
 	COPY_0_5BPP_SAFE Intro2    ; Copy 0.5bpp tiles
 
 	call ClearBackground       ; Clear the logo from the background
@@ -194,6 +196,24 @@ LoopForever:
 
 
 SECTION "Intro Subroutines", ROM0
+
+CopyTopSafe:
+.loop1
+	ld a, l                   ; Load the value in L into A
+	add TILE_SIZE             ; Add tile size
+	ld l, a                   ; Load the result into L
+	ld b, 8                   ; Set the loop counter
+.loop2
+	rst WaitVRAM              ; Wait for VRAM to become accessible
+	ld a, [de]                ; Load a byte from the address DE points to into the A register
+	ld [hli], a               ; Load the byte in the A register to the address HL points to, increment HL
+	ld [hli], a               ; Repeat for the second bitplane
+	inc de                    ; Increment the source pointer in DE
+	dec b                     ; Decrement the inner loop counter
+	jr nz, .loop2             ; Stop if B is zero, otherwise keep looping
+	dec c                     ; Decrement the outer loop counter
+	jr nz, .loop1             ; Stop if C is zero, otherwise keep looping
+	ret
 
 SetOddball:
 	ld a, [de]                 ; Load the Y value
@@ -334,10 +354,13 @@ ENDR
 	ret
 
 
-SECTION "Intro Tile data", ROM0, ALIGN[8]
+SECTION "Intro Tile data", ROM0
 
-IntroTiles:
+RegTiles:
 	INCBIN "intro_reg.1bpp"
+.end
+
+TopTiles:
 	INCBIN "intro_not.1bpp"
 	INCBIN "intro_top.1bpp"
 	INCBIN "intro_by.1bpp"

@@ -45,20 +45,11 @@ ENDR
 	jr nz, .loop\@      ; If B and C are both zero, OR B will be zero, otherwise keep looping
 ENDM
 
-; @param \1 Page-aligned Tiles prefix
-MACRO COPY_1BPP_SAFE
-ASSERT(HIGH(\1Tiles.end - \1Tiles))
-	ld bc, HIGH(\1Tiles.end - \1Tiles) ; Clear B and set C to the page count
-.loop\@
-	rst WaitVRAM        ; Wait for VRAM to become accessible
-	ld a, [de]          ; Load a byte from the address DE points to into the A register
-	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
-	ld [hli], a         ; Repeat for the second bitplane
-	inc de              ; Increment the source pointer in DE
-	dec b               ; Decrement the inner loop counter
-	jr nz, .loop\@      ; Stop if B is zero, otherwise keep looping
-	dec c               ; Decrement the outer loop counter
-	jr nz, .loop\@      ; Stop if C is zero, otherwise keep looping
+; @param \1 Tiles prefix
+MACRO COPY_1BPP_TOP_SAFE
+ASSERT(!HIGH(\1Tiles.end - \1Tiles))
+	ld c, (\1Tiles.end - \1Tiles) >> 3 ; Set C to the tile count
+	call CopyTopSafe
 ENDM
 
 ; @param \1 Page-aligned Tiles prefix
