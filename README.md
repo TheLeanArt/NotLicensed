@@ -13,7 +13,7 @@ The demo consists of three separate scenes:
 2. ® falling down.
 3. Everything flying away.
 
-# Technical Details
+## Technical Details
 
 The 10 sprite-per-scanline limitation is overcome in the third scene by rendering some of the elements separately:
 
