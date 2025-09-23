@@ -3,6 +3,7 @@
 Game Boy startup logo animation.
 
 ![Not licensed by Nintendo](https://img.itch.zone/aW1hZ2UvMzg0MTE4NS8yMjkyNDE1Ny5wbmc=/347x500/UvghrD.png)
+![Not licenced by Nintendo](https://img.itch.zone/aW1hZ2UvMzg3OTYyNy8yMzI2MzQ3MC5wbmc=/347x500/qjLjW3.png)
 
 This is my first Game Boy project ever. The code is pure assembly and the art is hand-painted.
 
