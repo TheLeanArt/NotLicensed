@@ -166,7 +166,8 @@ InitTop:
 	ld hl, wShadowOAM + OBJ_INTRO_NOT * OBJ_SIZE
 	ld bc, T_INTRO_NOT << 8    ; Load tile ID and attributes
 	ld de, Y_INTRO_INIT << 8 | X_INTRO_TOP
-	call SetTwoObjects         ; Set the meta-object
+	call SetObject             ; Set the first object
+	call SetObject             ; Set the second object
 
 FOR I, 8
 	INTRO_TOP_INIT {d:I}
@@ -180,10 +181,6 @@ ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
 	ldh a, [hFlags]            ; Load our flags into the A register
 	and 1 << B_FLAGS_DMG0      ; Isolate the DMG0 flag
 	ld c, a                    ; Load attributes
-	jr SetObject               ; Set the object and return
-
-SetTwoObjects:
-	call SetObject             ; Set the first object
 	; Fall through
 
 SetObject:
