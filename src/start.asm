@@ -54,9 +54,6 @@ EntryPoint:
 	ld a, d                    ; Load the flags into A
 	ldh [hFlags], a            ; Set our flags
 
-	xor a                      ; Clear the A register
-	ldh [rAUDENA], a           ; Shut down audio circuitry
-
 	; Load the length of the OAMDMA routine into B
     ; and the low byte of the destination into C
 	ld bc, (FixedOAMDMA.end - FixedOAMDMA) << 8 | LOW(hFixedOAMDMA)

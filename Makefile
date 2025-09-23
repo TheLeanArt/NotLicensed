@@ -18,7 +18,9 @@ OBJS = \
 	src/intro/intro_main.o \
 	src/intro/intro_drop.o \
 	src/intro/intro_lut.o \
+	src/intro/intro_song.o \
 	src/oamdma.o \
+	src/hUGEDriver.o \
 	
 INC = \
 	inc/hardware.inc \

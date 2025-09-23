@@ -83,6 +83,9 @@ Intro::
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_OBJ_16 | LCDC_WIN_ON | LCDC_WIN_9C00
 	ldh [rLCDC], a             ; Enable and configure the LCD
 
+	ld hl, intro_song          ; Load the song address into the HL register
+	call hUGE_init             ; Initialize the audio
+
 	ldh a, [hFlags]            ; Load our flags into the A register
 	ld c, a                    ; Store the flags in the C register
 	bit B_FLAGS_SGB, a         ; Are we running on SGB?
@@ -174,9 +177,23 @@ ENDR
 	res 7, e
 
 	call hFixedOAMDMA          ; Prevent lag
+	push de                    ; Save the value of DE
+	call hUGE_dosound          ; Tick the audio
+	pop de                     ; Restore the value of DE
 	inc e                      ; Increment the step counter
 	bit 7, e                   ; Step 128 reached?
 	jr z, .mainLoop            ; If not, continue to loop
+
+	ld b, INTRO_SONG_DELAY     ; Small delay for the audio to finish playing
+.songLoop
+	rst WaitVBlank             ; Wait for the next VBlank
+	push bc                    ; Save the value of BC
+	call hUGE_dosound          ; Tick the audio
+	pop bc                     ; Restore the value of BC
+	dec b                      ; Decrement the counter
+	jr nz, .songLoop           ; Continue to loop unless zero
+	xor a                      ; Clear the A register
+	ldh [rAUDENA], a           ; Shut down audio circuitry
 
 LoopForever:
 	halt
