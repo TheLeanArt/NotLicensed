@@ -22,7 +22,7 @@ The demo consists of three separate scenes:
 
 The 10 sprite-per-scanline limitation is overcome in the third scene by rendering some of the elements separately:
 
-* _by_ _e_ on the background (causing them to share the vector of movement) and
+* _by_ and _e_ on the background (causing them to share the vector of movement) and
 * 2nd _n_ on the window.
 
 ## Building from Source
