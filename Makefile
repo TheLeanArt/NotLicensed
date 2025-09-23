@@ -11,6 +11,7 @@ RGBLINKFLAGS = -n $(SYM)
 RGBFIXFLAGS  = -v -p 0xFF -t $(TITLE) -c
 RGBASMFLAGS  = -I inc -I art
 RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro \
+	#-D COLOR8 \
 	#-D EN_GB
 
 OBJS = \
@@ -23,6 +24,7 @@ OBJS = \
 INC = \
 	inc/hardware.inc \
 	inc/common.inc \
+	inc/color.inc \
 
 INTRO_INC = \
 	inc/intro.inc \
