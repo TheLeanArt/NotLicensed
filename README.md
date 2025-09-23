@@ -46,3 +46,10 @@ Make sure that any the following isn't preceded by a comment (`#`).
 * [The Late Demo](https://leanart.itch.io/latedemo) (full colour)
 
 Feel free to use in your project (but consider dropping me a line).
+
+## Acknowledgments
+
+* Code portions adapted from [Simple GB ASM Examples](https://github.com/tbsp/simple-gb-asm-examples/) by Dave VanEe
+* CI script adapted from [ISSOtm's contribution](https://github.com/tbsp/simple-gb-asm-examples/pull/2) to _Simple GB ASM Examples_
+* [hUGEDriver](https://github.com/SuperDisk/hUGEDriver/) written by SuperDisk
+* Audio sample adapted from _Wild Pokemon Appear_ by Junichi Masuda
