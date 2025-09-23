@@ -67,6 +67,9 @@ EntryPoint:
 
 	call Intro                 ; Call intro
 
+	xor a                      ; Clear the A register
+	ldh [rAUDENA], a           ; Shut down audio circuitry
+
 LoopForever:
 	halt
 	jr LoopForever
