@@ -4,8 +4,8 @@ RGBASM  = rgbasm
 RGBGFX  = rgbgfx
 
 TITLE = NOTLICENSED
-TARGET = demo.gb
-SYM = demo.sym
+TARGET = intro.gbc
+SYM = intro.sym
 
 RGBLINKFLAGS = -n $(SYM)
 RGBFIXFLAGS  = -v -p 0xFF -t $(TITLE) -c
