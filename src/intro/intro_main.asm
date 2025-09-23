@@ -120,10 +120,7 @@ ENDR
 	call hFixedOAMDMA          ; Prevent lag
 	inc e                      ; Increment the step counter
 	jr nz, .loop               ; Continue to loop unless 256 reached
-
-LoopForever:
-	halt
-	jr LoopForever
+	ret
 
 
 SECTION "Intro Subroutines", ROM0
