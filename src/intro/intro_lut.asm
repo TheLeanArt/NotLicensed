@@ -21,7 +21,7 @@ ENDR
 	ds 64, 0
 
 .tile\@
-	ds 128, T_INTRO_TOP_0 + \1 * 2
+	ds 128, T_INTRO_TOP_\1
 
 .attrs\@
 	ds 128, 0

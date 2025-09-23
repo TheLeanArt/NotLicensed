@@ -10,7 +10,8 @@ SYM = demo.sym
 RGBLINKFLAGS = -n $(SYM)
 RGBFIXFLAGS  = -v -p 0xFF -t $(TITLE) -c
 RGBASMFLAGS  = -I inc -I art
-RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro
+RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro \
+	#-D EN_GB
 
 OBJS = \
 	src/start.o \
@@ -52,6 +53,7 @@ src/intro/intro_main.o: src/intro/intro_main.asm $(INC) $(INTRO_INC) $(INTRO_1BP
 	$(RGBASM) $(RGBASMFLAGS_INTRO) $< -o $@
 
 src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
+	$(RGBASM) $(RGBASMFLAGS_INTRO) $< -o $@
 
 %.o: %.asm $(INC)
 	$(RGBASM) $(RGBASMFLAGS) $< -o $@
