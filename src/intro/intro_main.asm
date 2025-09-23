@@ -192,12 +192,7 @@ ENDR
 	pop bc                     ; Restore the value of BC
 	dec b                      ; Decrement the counter
 	jr nz, .songLoop           ; Continue to loop unless zero
-	xor a                      ; Clear the A register
-	ldh [rAUDENA], a           ; Shut down audio circuitry
-
-LoopForever:
-	halt
-	jr LoopForever
+	ret
 
 
 SECTION "Intro Subroutines", ROM0
