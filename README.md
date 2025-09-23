@@ -31,7 +31,7 @@ The 10 sprite-per-scanline limitation is overcome in the third scene by renderin
 make
 ```
 
-* EN_GB option: remove the `#` from `-D EN_GB` in Makefile.
+* **EN_GB option:** remove the `#` from `-D EN_GB` in Makefile.
 
 ## Deployments
 
