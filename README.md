@@ -13,7 +13,12 @@ The demo consists of three separate scenes:
 2. ® falling down.
 3. Everything flying away.
 
-The 10 sprite-per-scanline limitation is overcome in the third scene by rendering two letters on the background (`e`) and on the window (2nd `n`).
+# Technical Details
+
+The 10 sprite-per-scanline limitation is overcome in the third scene by rendering some of the elements separately:
+
+* _by_ _e_ on the background (causing them to share the vector of movement) and
+* 2nd _n_ on the window.
 
 ## Building from Source
 
