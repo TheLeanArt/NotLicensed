@@ -3,7 +3,7 @@
 Game Boy startup logo animation.
 
 ![Not licensed by Nintendo](https://img.itch.zone/aW1hZ2UvMzg0MTE4NS8yMjkyNDE1Ny5wbmc=/347x500/UvghrD.png)
-![Not licenced by Nintendo](https://img.itch.zone/aW1hZ2UvMzg3OTYyNy8yMzI2MzQ3MC5wbmc=/347x500/qjLjW3.png)
+![Not licenced by Nintendo](https://img.itch.zone/aW1hZ2UvMzg1NzQ1Mi8yMzI5MzU0MC5wbmc=/347x500/kopBdB.png)
 
 This is my first Game Boy project ever. The code is pure assembly and the art is hand-painted.
 
@@ -31,13 +31,18 @@ The 10 sprite-per-scanline limitation is overcome in the third scene by renderin
 make
 ```
 
-* **EN_GB option:** remove the `#` from `-D EN_GB` in Makefile.
+### Customisations
+
+Make sure that any the following isn't preceded by a comment (`#`).
+
+* **COLOR8:** remove the `#` from `-D COLOR8` in Makefile.
+* **EN_GB:** remove the `#` from `-D EN_GB` in Makefile.
 
 ## Deployments
 
 * [KULI](https://leanart.itch.io/kuli)
 * [Shlimazl](https://leanart.itch.io/shlimazl) ([drop-only](https://github.com/TheLeanArt/NotLicensed/tree/drop-only)+EN_GB+colour+[music](https://github.com/TheLeanArt/NotLicensed/tree/music))
 * [Still Got the Blues](https://leanart.itch.io/sgb)
-* [The Late Demo](https://leanart.itch.io/latedemo)
+* [The Late Demo](https://leanart.itch.io/latedemo) (full colour)
 
 Feel free to use in your project (but consider dropping me a line).
