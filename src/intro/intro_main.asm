@@ -51,12 +51,22 @@ Intro::
 	cp OAM_SIZE                ; End of OAM reached?
 	jr nz, .clearOAMLoop       ; If not, continue looping
 
+IF DEF(COLOR8)
+	ld de, TopTiles
+	ld hl, STARTOF(VRAM) | T_INTRO_NOT_2 << 4
+	call CopyTopPostDouble
+	dec c
+	call CopyTopSingle
+	ld e, LOW(RegTiles)
+	ld l, LOW(T_INTRO_REG << 4) - 8
+ELSE
 	ld de, RegTiles
 	ld hl, (STARTOF(VRAM) | T_INTRO_REG << 4 | $100) - 8
-	COPY_1BPP_TOP_SAFE Reg     ; Copy the ® tiles
+ENDC
+	COPY_1BPP_TOP_PRE_SAFE Reg ; Copy the ® tiles
 	ld l, LOW(T_INTRO_NOT << 4); Advance to the beginning of the next tile
-	COPY_1BPP_TOP_SAFE Top     ; Copy the top tiles
-	COPY_0_5BPP_SAFE Intro2    ; Copy 0.5bpp tiles
+	COPY_1BPP_TOP_PRE_SAFE Top ; Copy the top tiles
+	COPY_0_5BPP_PRE_SAFE Intro2; Copy 0.5bpp tiles
 
 	call ClearBackground       ; Clear the logo from the background
 	INTRO_META_INIT BY         ; Draw BY on the background
@@ -68,7 +78,7 @@ Intro::
 	ld a, WX_OFS               ; Load the window's X value into A
 	ldh [rWX], a               ; Set the window's X coordinate
 
-	ld a, %11_11_01_00         ; Display dark gray as black
+	ld a, %11_11_11_00         ; Display everything as black
 	ldh [rOBP0], a             ; Set the default object palette
 	xor a                      ; Display everything as white
 	ldh [rOBP1], a             ; Set the alternate object palette
@@ -130,6 +140,17 @@ REPT 4
 	ld a, [de]                 ; Load Y/X/tile ID/attributes value
 	ld [hli], a                ; Set the value
 ENDR
+
+IF C_INTRO_BY != C_INTRO_BOTTOM || DEF(COLOR8)
+
+	bit B_FLAGS_GBC, c         ; Are we running on GBC?
+	jr z, .cont2               ; If not, proceed to prevent lag
+	ld a, e                    ; Load the value in E into A
+	cp COLOR8_STEP             ; Coloration step reached?
+	call z, Color8             ; If yes, colorate
+.cont2
+
+ENDC
 
 .regDone
 	call hFixedOAMDMA          ; Prevent lag
@@ -196,23 +217,45 @@ ENDR
 
 
 SECTION "Intro Subroutines", ROM0
+CopyTopPostDouble:
+	ld c, 0                    ; Filter out bitplane 0
+	call CopyTopSingle         ; Copy the first tile
+	; Fall through
 
-CopyTopSafe:
+CopyTopSingle:
+	ld a, l                    ; Load the value in L into A
+	add TILE_SIZE              ; Add tile size
+	ld l, a                    ; Load the result into L
+	ld b, 8                    ; Set the loop counter
+.loop
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ld a, [de]                 ; Load a byte from the address DE points to into the A register
+	and c                      ; Filter the value in A
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	ld a, [de]                 ; Load a byte from the address DE points to into the A register
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	inc e                      ; Increment the source pointer in E
+	dec b                      ; Decrement the inner loop counter
+	jr nz, .loop               ; Stop if B is zero, otherwise keep looping
+	ret
+
+CopyTopPreSafe:
 .loop1
-	ld a, l                   ; Load the value in L into A
-	add TILE_SIZE             ; Add tile size
-	ld l, a                   ; Load the result into L
-	ld b, 8                   ; Set the loop counter
+	ld a, l                    ; Load the value in L into A
+	add TILE_SIZE              ; Add tile size
+	ld l, a                    ; Load the result into L
+	ld b, 8                    ; Set the loop counter
 .loop2
-	rst WaitVRAM              ; Wait for VRAM to become accessible
-	ld a, [de]                ; Load a byte from the address DE points to into the A register
-	ld [hli], a               ; Load the byte in the A register to the address HL points to, increment HL
-	ld [hli], a               ; Repeat for the second bitplane
-	inc de                    ; Increment the source pointer in DE
-	dec b                     ; Decrement the inner loop counter
-	jr nz, .loop2             ; Stop if B is zero, otherwise keep looping
-	dec c                     ; Decrement the outer loop counter
-	jr nz, .loop1             ; Stop if C is zero, otherwise keep looping
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ld a, [de]                 ; Load a byte from the address DE points to into the A register
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	xor a                      ; Clear the A register
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	inc de                     ; Increment the source pointer in DE
+	dec b                      ; Decrement the inner loop counter
+	jr nz, .loop2              ; Stop if B is zero, otherwise keep looping
+	dec c                      ; Decrement the outer loop counter
+	jr nz, .loop1              ; Stop if C is zero, otherwise keep looping
 	ret
 
 SetOddball:
@@ -330,26 +373,126 @@ SetObject16:
 	ld [hli], a                ; Set the attributes
 	ret
 
+Color8:
+
+IF C_INTRO_BY != C_INTRO_BOTTOM
+	push de
+	ld hl, STARTOF(VRAM) | (T_INTRO_BY - 2) << 4
+	ld de, TopTiles.by
+	call CopyTopPostDouble
+	pop de
+ENDC
+
+IF DEF(COLOR8)
+FOR I, 0, 3
+IF I == 0
+	ld hl, wShadowOAM + OAMA_TILEID
+ELSE
+	ld l, I * OBJ_SIZE + OAMA_TILEID
+ENDC
+	ld a, T_INTRO_NOT_2 + I * 2
+	ld [hli], a
+ENDR
+	xor a
+FOR I, 0, 8
+IF I > 0
+	ld l, (I + 2) * OBJ_SIZE + OAMA_FLAGS
+ENDC
+	ld [hl], a
+	inc a
+ENDR
+ENDC
+
+	ret
+
 SetPalettes:
 	ld hl, rBGPI
 	call SetPalette
+
+IF DEF(COLOR8)
+
+FOR I, 0, 8
+	ld a, OBPI_AUTOINC | I << 3 | 2
+	ld [hli], a
+IF I == 0
+IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
+	IF C_INTRO_BOTTOM
+		ld a, LOW(C_INTRO_BOTTOM)
+	ELSE
+		xor a
+	ENDC
+	ld [hl], a
+	ld [hl], a
+ELSE
+	ld bc, C_INTRO_BOTTOM
+	ld [hl], c
+	ld [hl], b
+ENDC
+	ld bc, C_INTRO_NOT
+	ld [hl], c
+	ld [hl], b
+	ld bc, C_INTRO_TOP_0
+ELSE
+DEF _ = (I - 1)
+IF HIGH(C_INTRO_TOP_{d:I}) == HIGH(C_INTRO_TOP_{d:_})
+	ld c, LOW(C_INTRO_TOP_{d:I})
+ELIF LOW(C_INTRO_TOP_{d:I}) == LOW(C_INTRO_TOP_{d:_})
+	ld b, HIGH(C_INTRO_TOP_{d:I})
+ELSE
+	ld bc, C_INTRO_TOP_{d:I}
+ENDC
+ENDC
+	ld [hl], c
+	ld [hl], b
+	dec l
+ENDR
+	ret
+
+ELSE
+
 	; Fall through
+
+ENDC
 
 SetPalette:
 	ld a, BGPI_AUTOINC
 	ld [hli], a
-	ld a, $FF
+IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
+	ld a, LOW(C_INTRO_BACK)
 	ld [hl], a
 	ld [hl], a
-	cpl
-REPT 5
+ELSE
+	ld bc, C_INTRO_BACK
+	ld [hl], c
+	ld [hl], b
+ENDC
+IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
+	IF C_INTRO_BOTTOM
+		ld a, LOW(C_INTRO_BOTTOM)
+	ELSE
+		xor a
+	ENDC
 	ld [hl], a
-ENDR
+IF C_INTRO_BY != C_INTRO_BOTTOM
+	ld [hl], a
+ELSE
 	ld [hli], a
+ENDC
+ELSE
+	ld bc, C_INTRO_BOTTOM
+	ld [hl], c
+	ld [hl], b
+ENDC
+IF C_INTRO_BY != C_INTRO_BOTTOM
+	ld bc, C_INTRO_BY
+	ld [hl], c
+	ld [hl], b
+	inc l
+ENDC
 	ret
 
 
-SECTION "Intro Tile data", ROM0
+SECTION "Intro Tile data", ROM0, ALIGN[8]
 
 RegTiles:
 	INCBIN "intro_reg.1bpp"
@@ -358,6 +501,7 @@ RegTiles:
 TopTiles:
 	INCBIN "intro_not.1bpp"
 	INCBIN "intro_top.1bpp"
+.by
 	INCBIN "intro_by.1bpp"
 .end
 

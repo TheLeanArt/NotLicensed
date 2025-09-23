@@ -21,10 +21,18 @@ ENDR
 	ds 64, 0
 
 .tile\@
+IF \1 == 0
+	ds 128, T_INTRO_TOP_0_2
+ELSE
 	ds 128, T_INTRO_TOP_\1
+ENDC
 
 .attrs\@
+IF DEF(COLOR8)
+	ds 128, \1
+ELSE
 	ds 128, 0
+ENDC
 
 ASSERT (LOW(@) == 0)
 
@@ -49,7 +57,7 @@ ENDR
 	ds 64, 0
 
 .tile\@
-	ds 128, T_INTRO_NOT + I * 2
+	ds 128, T_INTRO_NOT_2 + I * 2
 
 .attrs\@
 	ds 128, 0
