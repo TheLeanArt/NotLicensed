@@ -177,10 +177,7 @@ ENDR
 	inc e                      ; Increment the step counter
 	bit 7, e                   ; Step 128 reached?
 	jr z, .mainLoop            ; If not, continue to loop
-
-LoopForever:
-	halt
-	jr LoopForever
+	ret
 
 
 SECTION "Intro Subroutines", ROM0

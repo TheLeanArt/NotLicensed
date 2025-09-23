@@ -68,7 +68,11 @@ EntryPoint:
 	dec b                      ; Decrement the loop counter in B
 	jr nz, .copyOAMDMAloop     ; If B isn't zero, continue looping
 
-	jp Intro                   ; Proceed to intro
+	call Intro                 ; Call intro
+
+LoopForever:
+	halt
+	jr LoopForever
 
 
 SECTION "Flags", HRAM
