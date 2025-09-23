@@ -57,17 +57,7 @@ EntryPoint:
 	xor a                      ; Clear the A register
 	ldh [rAUDENA], a           ; Shut down audio circuitry
 
-	; Load the length of the OAMDMA routine into B
-    ; and the low byte of the destination into C
-	ld bc, (FixedOAMDMA.end - FixedOAMDMA) << 8 | LOW(hFixedOAMDMA)
-	ld hl, FixedOAMDMA         ; Load the source address of our routine into HL
-.copyOAMDMAloop
-	ld a, [hli]                ; Load a byte from the address HL points to into the register A, increment HL
-	ldh [c], a                 ; Load the byte in the A register to the address in HRAM with the low byte stored in C
-	inc c                      ; Increment the low byte of the HRAM pointer in C
-	dec b                      ; Decrement the loop counter in B
-	jr nz, .copyOAMDMAloop     ; If B isn't zero, continue looping
-
+	call CopyOAMDMA            ; Copy our OAM DMA routine
 	call Intro                 ; Call intro
 
 LoopForever:

@@ -17,8 +17,8 @@ WaitVRAM::
 SECTION "WaitVBlank", ROM0[$38]
 WaitVBlank::
 	halt                       ; Wait for interrupt
-    ldh a, [rLY]               ; Read the LY register to check the current scanline
-    cp SCREEN_HEIGHT_PX        ; Compare the current scanline to the first scanline of VBlank
+	ldh a, [rLY]               ; Read the LY register to check the current scanline
+	cp SCREEN_HEIGHT_PX        ; Compare the current scanline to the first scanline of VBlank
 	ret nc                     ; Return as soon as the carry flag is clear
 	jr WaitVBlank              ; Proceed to loop otherwise
 
@@ -31,26 +31,36 @@ VBlank::
 	reti
 
 
-SECTION "Fixed OAM DMA Subroutine", ROM0
-
-FixedOAMDMA::
-	ld a, HIGH(wShadowOAM)
-    ldh [rDMA], a
-    ld a, OAM_COUNT
+SECTION "CopyOAMDMA", ROM0
+CopyOAMDMA::
+	ld bc, (FixedOAMDMA.end - FixedOAMDMA) << 8 | LOW(hFixedOAMDMA)
+	ld hl, FixedOAMDMA         ; Load the source address of our routine into HL
 .loop
-    dec a
-    jr nz, .loop
-    ret
+	ld a, [hli]                ; Load a byte from the address HL points to into the register A, increment HL
+	ldh [c], a                 ; Load the byte in the A register to the address in HRAM with the low byte stored in C
+	inc c                      ; Increment the low byte of the HRAM pointer in C
+	dec b                      ; Decrement the loop counter in B
+	jr nz, .loop     ; If B isn't zero, continue looping
+	ret
+
+
+SECTION "Fixed OAM DMA Subroutine", ROM0
+FixedOAMDMA:
+	ld a, HIGH(wShadowOAM)
+	ldh [rDMA], a
+	ld a, OAM_COUNT
+.loop
+	dec a
+	jr nz, .loop
+	ret
 .end::
 
 
 SECTION "OAM DMA", HRAM
-
 hFixedOAMDMA::
 	ds FixedOAMDMA.end - FixedOAMDMA
 
 
 SECTION "Shadow OAM", WRAM0, ALIGN[8]
-
 wShadowOAM::
 	ds OAM_SIZE
