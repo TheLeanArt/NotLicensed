@@ -17,14 +17,12 @@ MACRO INTRO_DBL_INIT
 ENDM
 
 MACRO INTRO_TOP_INIT
-	ld [hl], d                 ; Set Y
-	inc l                      ; Advance to X
-	ld a, X_INTRO_TOP_\1       ; Load X
-	ld [hli], a                ; Set X
-	ld a, T_INTRO_TOP_\1       ; Load tile ID
-	ld [hli], a                ; Set tile ID
-	xor a                      ; Set A to zero
-	ld [hli], a                ; Set attributes
+DEF _ = (\1 - 1)
+IF \1 && T_INTRO_TOP_\1 != T_INTRO_TOP_{d:_} + 1
+	ld b, T_INTRO_TOP_\1       ; Load tile ID
+ENDC
+	ld e, X_INTRO_TOP_\1       ; Load X coordinate
+	call SetObject             ; Set the object
 ENDM
 
 
@@ -166,9 +164,9 @@ SetWindow:
 
 InitTop:
 	ld hl, wShadowOAM + OBJ_INTRO_NOT * OBJ_SIZE
-	ld b, T_INTRO_NOT
+	ld bc, T_INTRO_NOT << 8    ; Load tile ID and attributes
 	ld de, Y_INTRO_INIT << 8 | X_INTRO_TOP
-	call SetTwoObjects
+	call SetTwoObjects         ; Set the meta-object
 
 FOR I, 8
 	INTRO_TOP_INIT {d:I}
@@ -176,34 +174,30 @@ ENDR
 	; Fall through
 
 InitReg:
-	ld a, Y_INTRO_REG          ; Load the Y value
-	ld [hli], a                ; Set the Y coordinate
-	ld a, X_INTRO_REG          ; Load the X value
-	ld [hli], a                ; Set the X coordinate
-	ld a, T_INTRO_REG          ; Load the tile ID
-	ld [hli], a                ; Store tile ID
+	ld b, T_INTRO_REG          ; Load tile ID
+	ld de, Y_INTRO_REG << 8 | X_INTRO_REG
 ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
 	ldh a, [hFlags]            ; Load our flags into the A register
 	and 1 << B_FLAGS_DMG0      ; Isolate the DMG0 flag
-	ld [hli], a                ; Set attributes
-	ret
+	ld c, a                    ; Load attributes
+	jr SetObject               ; Set the object and return
 
 SetTwoObjects:
-	call SetObject
+	call SetObject             ; Set the first object
 	; Fall through
 
 SetObject:
-	ld a, d
-	ld [hli], a
-	ld a, e
-	ld [hli], a
-	add TILE_WIDTH
-	ld e, a
-	ld a, b
-	ld [hli], a
-	inc b
-	xor a
-	ld [hli], a
+	ld a, d                    ; Load the X coordinate from D
+	ld [hli], a                ; Set the Y coordinate
+	ld a, e                    ; Load the X coordinate from E
+	ld [hli], a                ; Set the X coordinate
+	add TILE_WIDTH             ; Advance the X coordinate
+	ld e, a                    ; Store the updated X coordinate
+	ld a, b                    ; Load the tile ID from B
+	ld [hli], a                ; Set the tile ID
+	inc b                      ; Advance the tile ID
+	ld a, c                    ; Load the attributes from C
+	ld [hli], a                ; Set the attributes
 	ret
 
 SetPalettes:
