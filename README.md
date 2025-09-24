@@ -9,13 +9,18 @@ This is my first Game Boy project ever. The code is pure assembly and the art is
 
 The demo consists of three separate scenes:
 
-1. "Not licensed by" dropping from above.
+1. _Not licensed by_ dropping from above.
 2. ® falling down.
 3. Everything flying away.
 
+## Platform-Specific Features
+
+* **Game Boy Colour:** B&W palette with optional multi-colour palettes for _Not licensed by_
+* **DMG0:** ® is invisible
+
 ## Flavours
 
-* [drop-only](https://github.com/TheLeanArt/NotLicensed/tree/drop-only) (much smaller ROM footprint)
+* [drop-only](https://github.com/TheLeanArt/NotLicensed/tree/drop-only) (scene 3 removed, much smaller ROM footprint)
 
 ## Technical Details
 
