@@ -34,6 +34,8 @@ make
 
 Make sure that any the following isn't preceded by a comment (`#`).
 
+* **INTRO_SONG:** remove the '#' from `-D INTRO_SONG=intro_song`, `src/intro/intro_song.o` and `src/hUGEDriver.o` in Makefile (replace `intro_song` with your own hUGETracker song).
+* **INTRO_SONG_DELAY:** remove the '#' from `-D INTRO_SONG_DELAY=$10` (replace `10` with the appropriate hexadecimal delay in ticks).
 * **COLOR8:** remove the `#` from `-D COLOR8` in Makefile.
 * **EN_GB:** remove the `#` from `-D EN_GB` in Makefile.
 
