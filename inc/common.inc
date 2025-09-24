@@ -72,3 +72,15 @@ ASSERT(HIGH(\1Tiles.end - \1Tiles))
 	dec c               ; Decrement the outer loop counter
 	jr nz, .loop\@      ; Stop if C is zero, otherwise keep looping
 ENDM
+
+; @param \1 First color
+; @param \2 Second color
+; @param \3 Step count
+; @param \4 Step
+MACRO INTER_COLOR
+	DEF _MAX = (\3 - 1)
+	DEF _R = ((((\1      ) & $1F) * (_MAX - \4) + ((\2      ) & $1F) * \4) / _MAX)
+	DEF _G = ((((\1 >>  5) & $1F) * (_MAX - \4) + ((\2 >>  5) & $1F) * \4) / _MAX)
+	DEF _B = ((((\1 >> 10) & $1F) * (_MAX - \4) + ((\2 >> 10) & $1F) * \4) / _MAX)
+	dw {d:_B} << 10 | {d:_G} << 5 | {d:_R}
+ENDM
