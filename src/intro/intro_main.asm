@@ -51,13 +51,7 @@ Intro::
 
 .cont
 	call InitTop               ; Initialize our objects
-
-.clearOAMLoop
-	xor a                      ; Set A to zero
-	ld [hli], a                ; Set and advance
-	ld a, l                    ; Load the lower address byte into A
-	cp OAM_SIZE                ; End of OAM reached?
-	jr nz, .clearOAMLoop       ; If not, continue looping
+	call ClearOAM              ; Clear the remaining shadow OAM
 
 IF DEF(COLOR8)
 	ld de, TopTiles2

@@ -40,7 +40,17 @@ CopyOAMDMA::
 	ldh [c], a                 ; Load the byte in the A register to the address in HRAM with the low byte stored in C
 	inc c                      ; Increment the low byte of the HRAM pointer in C
 	dec b                      ; Decrement the loop counter in B
-	jr nz, .loop     ; If B isn't zero, continue looping
+	jr nz, .loop               ; If B isn't zero, continue looping
+	ret
+
+
+SECTION "ClearOAM", ROM0
+ClearOAM::
+	xor a                      ; Set A to zero
+	ld [hli], a                ; Set and advance
+	ld a, l                    ; Load the lower address byte into A
+	cp OAM_SIZE                ; End of OAM reached?
+	jr nz, ClearOAM            ; If not, continue looping
 	ret
 
 
