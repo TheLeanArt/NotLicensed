@@ -91,7 +91,18 @@ ENDC
 	ldh a, [hFlags]            ; Load our flags into the A register
 	ld c, a                    ; Store the flags in the C register
 	bit B_FLAGS_SGB, a         ; Are we running on SGB?
-	jr z, .drop                ; If not, skip the SGB delay
+	jr z, .drop                ; If not, skip SGB init
+
+IF DEF(FADEOUT)
+	ld hl, wPacketBuffer       ; Load packet buffer address into HL
+	ld a, SGB_PAL01 | $01      ; Load command type and packet count
+	ld [hli], a                ; Set header and advance
+	xor a                      ; Set A to zero
+.clearLoop
+	ld [hli], a                ; Set and advance
+	bit 4, l                   ; Buffer length reached?
+	jr z, .clearLoop           ; If not, continue to loop
+ENDC
 
 	ld b, INTRO_SGB_DELAY      ; ~1 sec delay to make up for the SGB bootup animation
 .waitLoop
@@ -194,14 +205,18 @@ ENDC
 IF DEF(FADEOUT)
 
 	ldh a, [hFlags]            ; Load our flags into the A register
-	bit B_FLAGS_GBC, a         ; Are we running on GBC?
+	ld d, a                    ; Store the flags in the D register
+	and FLAGS_GBC | FLAGS_SGB  ; Are we running on GBC/SGB?
 	jr z, .fadeOutDone         ; If not, proceed to play sound
 	ld a, e                    ; Load the value in E into A
 	sub FADEOUT_START          ; Adjust to start of fadeout
 	jr c, .fadeOutDone         ; If not reached, proceed to play sound
-	ld c, a                    ; Load the adjusted step into C
-	res 0, c                   ; Clear the lowest bit
-	ld b, HIGH(FadeOutLUT)     ; Load upper LUT address byte into B
+	bit B_FLAGS_GBC, d         ; Are we running on GBC?
+	jr z, .fadeOutSGB          ; If not, proceed to fade out SGB
+
+.fadeOutGBC
+	ld h, HIGH(FadeOutLUT)     ; Load upper LUT address byte into H
+	call ReadLUT               ; Read color value
 	and 1                      ; Isolate the lower bit
 	add a                      ; Multiply by 2
 	add LOW(rBGPI)             ; Add lower register address byte
@@ -210,11 +225,23 @@ IF DEF(FADEOUT)
 	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld a, BGPI_AUTOINC | 2     ; Start at color 1 and autoincrement
 	ld [hli], a                ; Set index register and advance to value register
-	ld a, [bc]                 ; Load lower byte into A
-	ld [hl], a                 ; Set lower byte
-	inc c                      ; Increment source address
-	ld a, [bc]                 ; Load upper byte into A
-	ld [hli], a                ; Set upper byte
+	ld [hl], c                 ; Set lower byte
+	ld [hl], b                 ; Set upper byte
+	jr .fadeOutDone            ; Proceed to play sound
+
+.fadeOutSGB
+	bit 0, a                   ; Is the lower bit set?
+	jr nz, .fadeOutDone        ; If yes, proceed to play sound
+	ld h, HIGH(FadeOutSGBLUT)  ; Load upper LUT address byte into H
+	call ReadLUT               ; Read color value
+	ld hl, wPacketBuffer + 8   ; Load final buffer address into HL
+	call WriteThreeColorsSGB   ; Write colors 3, 2 and 1
+	ld bc, C_INTRO_BACK_SGB    ; Load background color into BC
+	call WriteColorSGB         ; Write color 0
+	push de                    ; Save the step counter
+	call SGB_SendPacket        ; Set SGB palette
+	pop de                     ; Restore the step counter
+
 .fadeOutDone
 
 ENDC
@@ -497,7 +524,36 @@ ENDR
 
 IF DEF(FADEOUT)
 
+SECTION "ReadLUT", ROM0
+ReadLUT:
+	ld l, a                    ; Load the adjusted step into L
+	res 0, l                   ; Clear the lowest bit
+	ld c, [hl]                 ; Load lower byte into C
+	inc l                      ; Increment lower LUT address byte
+	ld b, [hl]                 ; Load upper byte into B
+	bit B_FLAGS_GBC, d         ; Are we running on GBC?
+	ret
+
+WriteThreeColorsSGB:
+	call WriteColorSGB         ; Write the first color
+	; Fall through
+
+WriteTwoColorsSGB:
+	call WriteColorSGB         ; Write the color before last
+	; Fall through
+
+WriteColorSGB:
+	ld a, b                    ; Load upper byte into A
+	ld [hld], a                ; Set and move back
+	ld a, c                    ; Load lower byte into A
+	ld [hld], a                ; Set and move back
+	ret
+
+
 SECTION "FadeOutLUT", ROMX, ALIGN[8]
+IF C_INTRO_BOTTOM_SGB == C_INTRO_BOTTOM && C_INTRO_BACK_SGB == C_INTRO_BACK
+FadeOutSGBLUT:
+ENDC
 FadeOutLUT:
 DEF FADEOUT_MAX = (FADEOUT_LENGTH - 1)
 FOR I, 0, FADEOUT_LENGTH
@@ -506,5 +562,25 @@ FOR I, 0, FADEOUT_LENGTH
 	DEF _B = ((((C_INTRO_BOTTOM >> 10) & $1F) * (FADEOUT_MAX - I) + ((C_INTRO_BACK >> 10) & $1F) * I) / FADEOUT_MAX)
 	dw {d:_B} << 10 | {d:_G} << 5 | {d:_R}
 ENDR
+
+
+IF C_INTRO_BOTTOM_SGB != C_INTRO_BOTTOM || C_INTRO_BACK_SGB != C_INTRO_BACK
+
+SECTION "FadeOutSGBLUT", ROMX, ALIGN[8]
+FadeOutSGBLUT:
+DEF FADEOUT_MAX = (FADEOUT_LENGTH - 1)
+FOR I, 0, FADEOUT_LENGTH
+	DEF _R = ((((C_INTRO_BOTTOM_SGB      ) & $1F) * (FADEOUT_MAX - I) + ((C_INTRO_BACK_SGB      ) & $1F) * I) / FADEOUT_MAX)
+	DEF _G = ((((C_INTRO_BOTTOM_SGB >>  5) & $1F) * (FADEOUT_MAX - I) + ((C_INTRO_BACK_SGB >>  5) & $1F) * I) / FADEOUT_MAX)
+	DEF _B = ((((C_INTRO_BOTTOM_SGB >> 10) & $1F) * (FADEOUT_MAX - I) + ((C_INTRO_BACK_SGB >> 10) & $1F) * I) / FADEOUT_MAX)
+	dw {d:_B} << 10 | {d:_G} << 5 | {d:_R}
+ENDR
+
+ENDC
+
+
+SECTION "SGB Packet Buffer", WRAM0, ALIGN[8]
+wPacketBuffer:
+	ds SGB_PACKET_SIZE
 
 ENDC
