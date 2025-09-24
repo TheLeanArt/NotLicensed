@@ -3,6 +3,9 @@
 
 
 include "hardware.inc"
+include "common.inc"
+include "color.inc"
+include "gradient.inc"
 
 
 SECTION "WaitVRAM", ROM0[$30]
@@ -26,9 +29,51 @@ WaitVBlank::
 SECTION "VBlank Vector", ROM0[$40]
 VBlank::
 	push af
+	push bc
 	call hFixedOAMDMA
+	jr STAT.cont
+
+
+SECTION "STAT Vector", ROM0[$48]
+STAT:
+	push af
+	push bc
+	ldh a, [rLYC]
+.cont
+	ld b, a
+	add GRADIENT_STEP
+	ldh [rLYC], a
+	rst WaitVRAM
+	ld c, LOW(rBGPI)
+	ld a, BGPI_AUTOINC
+	ldh [c], a
+	inc c
+	ldh a, [hColorLow]
+	ldh [c], a
+	ld a, [hColorHigh]
+	ldh [c], a
+	ld a, b
+	and $FE
+	ld c, a
+	ld b, HIGH(ColorLUT)
+	ld a, [bc]
+	ldh [hColorLow], a
+	inc c
+	ld a, [bc]
+	ldh [hColorHigh], a
+	pop bc
 	pop af
 	reti
+
+
+SECTION "ColorLUT", ROM0, ALIGN[8]
+ColorLUT:
+FOR I, GRADIENT_LENGTH
+	INTER_COLOR C_GRADIENT_TOP, C_GRADIENT_BOTTOM, GRADIENT_LENGTH, I
+ENDR
+REPT GRADIENT_PADDING
+	dw C_GRADIENT_BOTTOM
+ENDR
 
 
 SECTION "CopyOAMDMA", ROM0
@@ -69,6 +114,13 @@ FixedOAMDMA:
 SECTION "OAM DMA", HRAM
 hFixedOAMDMA::
 	ds FixedOAMDMA.end - FixedOAMDMA
+
+
+SECTION "Current Color", HRAM
+hColorLow::
+	db
+hColorHigh::
+	db
 
 
 SECTION "Shadow OAM", WRAM0, ALIGN[8]

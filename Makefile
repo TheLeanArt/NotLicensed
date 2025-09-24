@@ -16,6 +16,7 @@ RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro \
 	# -D INTRO_SONG=intro_song \
 	# -D INTRO_SONG_DELAY=$10 \
 	# -D COLOR8 \
+	# -D GRADIENT \
 	# -D FADEOUT \
 	# -D EN_GB
 
@@ -34,6 +35,7 @@ INC = \
 	inc/hardware.inc \
 	inc/common.inc \
 	inc/color.inc \
+	inc/gradient.inc \
 	inc/sgb.inc \
 
 INTRO_INC = \
