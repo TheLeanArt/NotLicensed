@@ -21,6 +21,7 @@ RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro \
 OBJS = \
 	src/start.o \
 	src/intro/intro_main.o \
+	src/intro/intro_copy.o \
 	src/intro/intro_drop.o \
 	src/intro/intro_lut.o \
 	src/oamdma.o \
@@ -64,8 +65,7 @@ $(TARGET): $(OBJS)
 	$(RGBLINK) $(RGBLINKFLAGS) $^ -o $@
 	$(RGBFIX) $(RGBFIXFLAGS) $@
 
-src/intro/intro_main.o: src/intro/intro_main.asm $(INC) $(INTRO_INC) $(INTRO_1BPP) $(INTRO_2BPP)
-	$(RGBASM) $(RGBASMFLAGS_INTRO) $< -o $@
+src/intro/intro_copy.o: src/intro/intro_copy.asm $(INC) $(INTRO_INC) $(INTRO_1BPP) $(INTRO_2BPP)
 
 src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
 	$(RGBASM) $(RGBASMFLAGS_INTRO) $< -o $@
