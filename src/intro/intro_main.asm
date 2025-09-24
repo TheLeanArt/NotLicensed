@@ -93,6 +93,11 @@ ENDC
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_OBJ_16 | LCDC_WIN_ON | LCDC_WIN_9C00
 	ldh [rLCDC], a             ; Enable and configure the LCD
 
+IF DEF(INTRO_SONG)
+	ld hl, INTRO_SONG          ; Load the song address into the HL register
+	call hUGE_init             ; Initialize the audio
+ENDC
+
 	ldh a, [hFlags]            ; Load our flags into the A register
 	ld c, a                    ; Store the flags in the C register
 	bit B_FLAGS_SGB, a         ; Are we running on SGB?
@@ -195,9 +200,28 @@ ENDC
 	res 7, e
 
 	call hFixedOAMDMA          ; Prevent lag
+
+IF DEF(INTRO_SONG)
+	push de                    ; Save the step counter
+	call hUGE_dosound          ; Play sound
+	pop de                     ; Restore the step counter
+ENDC
+
 	inc e                      ; Increment the step counter
 	bit 7, e                   ; Step 128 reached?
 	jr z, .mainLoop            ; If not, continue to loop
+
+IF DEF(INTRO_SONG) && INTRO_SONG_DELAY
+	ld b, INTRO_SONG_DELAY     ; Small delay for the audio to finish playing
+.songLoop
+	rst WaitVBlank             ; Wait for the next VBlank
+	push bc                    ; Save the loop counter
+	call hUGE_dosound          ; Play sound
+	pop bc                     ; Restore the loop counter
+	dec b                      ; Decrement the loop counter
+	jr nz, .songLoop           ; Continue to loop unless zero
+ENDC
+
 	ret
 
 

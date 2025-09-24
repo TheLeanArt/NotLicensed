@@ -16,7 +16,6 @@ The demo consists of three separate scenes:
 ## Flavours
 
 * [drop-only](https://github.com/TheLeanArt/NotLicensed/tree/drop-only) (much smaller ROM footprint)
-* [music](https://github.com/TheLeanArt/NotLicensed/tree/music) (hUGEDriver integration)
 
 ## Technical Details
 
@@ -35,15 +34,17 @@ make
 
 Make sure that any the following isn't preceded by a comment (`#`).
 
+* **INTRO_SONG:** remove the `#` from `-D INTRO_SONG=intro_song`, `src/intro/intro_song.o` and `src/hUGEDriver.o` in Makefile (replace `intro_song` with your own hUGETracker song).
+* **INTRO_SONG_DELAY:** remove the `#` from `-D INTRO_SONG_DELAY=$10` (replace `10` with the appropriate hexadecimal delay in ticks).
 * **COLOR8:** remove the `#` from `-D COLOR8` in Makefile.
 * **EN_GB:** remove the `#` from `-D EN_GB` in Makefile.
 
 ## Deployments
 
 * [KULI](https://leanart.itch.io/kuli)
-* [Shlimazl](https://leanart.itch.io/shlimazl) ([drop-only](https://github.com/TheLeanArt/NotLicensed/tree/drop-only)+EN_GB+colour+[music](https://github.com/TheLeanArt/NotLicensed/tree/music))
+* [Shlimazl](https://leanart.itch.io/shlimazl) ([drop-only](https://github.com/TheLeanArt/NotLicensed/tree/drop-only)+EN_GB+colour+music)
 * [Still Got the Blues](https://leanart.itch.io/sgb)
-* [The Late Demo](https://leanart.itch.io/latedemo) (full colour)
+* [The Late Demo](https://leanart.itch.io/latedemo) (full colour+music)
 
 Feel free to use in your project (but consider dropping me a line).
 
