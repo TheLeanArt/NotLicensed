@@ -33,7 +33,7 @@ SGB_TryUnfreeze::
 
 SGB_TrySendPacket::
 	ldh a, [hFlags]
-	cp 1 << B_FLAGS_SGB
+	cp FLAGS_SGB
 	ret nz
 	; Fall through
 

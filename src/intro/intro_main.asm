@@ -298,7 +298,7 @@ InitReg:
 	ld de, Y_INTRO_REG << 8 | X_INTRO_REG
 ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
 	ldh a, [hFlags]            ; Load our flags into the A register
-	and 1 << B_FLAGS_DMG0      ; Isolate the DMG0 flag
+	and FLAGS_DMG0             ; Isolate the DMG0 flag
 	ld c, a                    ; Load attributes
 	jr SetObject16             ; Set the object and return
 

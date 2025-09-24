@@ -12,6 +12,11 @@ DEF B_FLAGS_GBA          EQU   2
 DEF B_FLAGS_DMG0         EQU   4
 
 DEF FLAGS_DMG            EQU   0
+DEF FLAGS_SGB            EQU   1 << B_FLAGS_SGB
+DEF FLAGS_GBC            EQU   1 << B_FLAGS_GBC
+DEF FLAGS_GBA            EQU   1 << B_FLAGS_GBC | 1 << B_FLAGS_GBA
+DEF FLAGS_DMG0           EQU   1 << B_FLAGS_DMG0
+
 
 ; Adapted from Simple GB ASM Examples by Dave VanEe
 ; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
