@@ -4,6 +4,7 @@
 
 include "hardware.inc"
 include "common.inc"
+include "intro.inc"
 
 
 ; Initialization portion adapted from Simple GB ASM Examples by Dave VanEe
@@ -54,11 +55,18 @@ EntryPoint:
 	ld a, d                    ; Load the flags into A
 	ldh [hFlags], a            ; Set our flags
 
+IF !DEF(INTRO_SONG)
+	xor a                      ; Clear the A register
+	ldh [rAUDENA], a           ; Shut down audio circuitry
+ENDC
+
 	call CopyOAMDMA            ; Copy our OAM DMA routine
 	call Intro                 ; Call intro
 
+IF DEF(INTRO_SONG)
 	xor a                      ; Clear the A register
 	ldh [rAUDENA], a           ; Shut down audio circuitry
+ENDC
 
 LoopForever:
 	halt

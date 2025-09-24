@@ -11,17 +11,19 @@ RGBLINKFLAGS = -n $(SYM)
 RGBFIXFLAGS  = -v -p 0xFF -t $(TITLE) -c
 RGBASMFLAGS  = -I inc -I art
 RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro \
-	#-D COLOR8 \
-	#-D EN_GB
+	# -D INTRO_SONG=intro_song \
+	# -D INTRO_SONG_DELAY=$10 \
+	# -D COLOR8 \
+	# -D EN_GB
 
 OBJS = \
 	src/start.o \
 	src/intro/intro_main.o \
 	src/intro/intro_drop.o \
 	src/intro/intro_lut.o \
-	src/intro/intro_song.o \
 	src/oamdma.o \
-	src/hUGEDriver.o \
+	# src/intro/intro_song.o \
+	# src/hUGEDriver.o \
 	
 INC = \
 	inc/hardware.inc \
@@ -57,6 +59,9 @@ src/intro/intro_main.o: src/intro/intro_main.asm $(INC) $(INTRO_INC) $(INTRO_1BP
 	$(RGBASM) $(RGBASMFLAGS_INTRO) $< -o $@
 
 src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
+	$(RGBASM) $(RGBASMFLAGS_INTRO) $< -o $@
+
+src/start.o: src/start.asm $(INC) $(INTRO_INC)
 	$(RGBASM) $(RGBASMFLAGS_INTRO) $< -o $@
 
 %.o: %.asm $(INC)
