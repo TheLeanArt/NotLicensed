@@ -136,11 +136,11 @@ ENDR
 IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM || DEF(COLOR8)
 
 	bit B_FLAGS_GBC, c         ; Are we running on GBC?
-	jr z, .cont2               ; If not, proceed to prevent lag
+	jr z, .regDone             ; If not, proceed to prevent lag
 	ld a, e                    ; Load the value in E into A
 	cp COLOR8_STEP             ; Coloration step reached?
 	call z, Color8             ; If yes, colorate
-.cont2
+	jr .regDone
 
 ENDC
 
@@ -190,6 +190,34 @@ ENDC
 	res 7, e
 
 	call hFixedOAMDMA          ; Prevent lag
+
+IF DEF(FADEOUT)
+
+	ldh a, [hFlags]            ; Load our flags into the A register
+	bit B_FLAGS_GBC, a         ; Are we running on GBC?
+	jr z, .fadeOutDone         ; If not, proceed to play sound
+	ld a, e                    ; Load the value in E into A
+	sub FADEOUT_START          ; Adjust to start of fadeout
+	jr c, .fadeOutDone         ; If not reached, proceed to play sound
+	ld c, a                    ; Load the adjusted step into C
+	res 0, c                   ; Clear the lowest bit
+	ld b, HIGH(FadeOutLUT)     ; Load upper LUT address byte into B
+	and 1                      ; Isolate the lower bit
+	add a                      ; Multiply by 2
+	add LOW(rBGPI)             ; Add lower register address byte
+	ld l, a                    ; Load the result into L
+	ld h, HIGH(rBGPI)          ; Load upper register address byte into H
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ld a, BGPI_AUTOINC | 2     ; Start at color 1 and autoincrement
+	ld [hli], a                ; Set index register and advance to value register
+	ld a, [bc]                 ; Load lower byte into A
+	ld [hl], a                 ; Set lower byte
+	inc c                      ; Increment source address
+	ld a, [bc]                 ; Load upper byte into A
+	ld [hli], a                ; Set upper byte
+.fadeOutDone
+
+ENDC
 
 IF DEF(INTRO_SONG)
 	push de                    ; Save the step counter
@@ -465,3 +493,18 @@ REPT 6
 	dw C_INTRO_BOTTOM_SGB
 ENDR
 	db 0
+
+
+IF DEF(FADEOUT)
+
+SECTION "FadeOutLUT", ROMX, ALIGN[8]
+FadeOutLUT:
+DEF FADEOUT_MAX = (FADEOUT_LENGTH - 1)
+FOR I, 0, FADEOUT_LENGTH
+	DEF _R = ((((C_INTRO_BOTTOM      ) & $1F) * (FADEOUT_MAX - I) + ((C_INTRO_BACK      ) & $1F) * I) / FADEOUT_MAX)
+	DEF _G = ((((C_INTRO_BOTTOM >>  5) & $1F) * (FADEOUT_MAX - I) + ((C_INTRO_BACK >>  5) & $1F) * I) / FADEOUT_MAX)
+	DEF _B = ((((C_INTRO_BOTTOM >> 10) & $1F) * (FADEOUT_MAX - I) + ((C_INTRO_BACK >> 10) & $1F) * I) / FADEOUT_MAX)
+	dw {d:_B} << 10 | {d:_G} << 5 | {d:_R}
+ENDR
+
+ENDC
