@@ -5,6 +5,7 @@
 include "hardware.inc"
 include "common.inc"
 include "intro.inc"
+include "sgb.inc"
 
 
 MACRO INTRO_META_INIT
@@ -40,8 +41,13 @@ SECTION "Intro", ROM0
 Intro::
 	ldh a, [hFlags]            ; Load our flags into the A register
 	bit B_FLAGS_GBC, a         ; Are we running on GBC?
-	jr z, .cont                ; If not, proceed to initialize objects
+	jr z, .trySGB              ; If not, proceed to try setting SGB palettes
 	call SetPalettes           ; Set GBC palettes
+	jr .cont                   ; Proceed to initialize objects
+
+.trySGB
+	ld hl, PaletteSGB          ; Load the palette address into the HL register
+	call SGB_TrySendPacket     ; Try setting SGB palettes
 
 .cont
 	call InitTop               ; Initialize our objects
@@ -67,6 +73,8 @@ ENDC
 	COPY_1BPP_TOP_PRE_SAFE Top ; Copy the top tiles
 	COPY_0_5BPP_PRE_SAFE Intro2; Copy 0.5bpp tiles
 
+	call SGB_TryFreeze         ; Freeze SGB display
+
 	call ClearBackground       ; Clear the logo from the background
 	INTRO_META_INIT BY         ; Draw BY on the background
 	call SetWindow             ; Draw the logo on the window
@@ -91,6 +99,8 @@ ENDC
 
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_OBJ_16 | LCDC_WIN_ON | LCDC_WIN_9C00
 	ldh [rLCDC], a             ; Enable and configure the LCD
+
+	call SGB_TryUnfreeze       ; Unfreeze SGB display
 
 IF DEF(INTRO_SONG)
 	ld hl, INTRO_SONG          ; Load the song address into the HL register
@@ -367,7 +377,7 @@ SetTwoObjects16:
 	call SetObject16           ; Set the first object
 	; Fall through
 
-SetObject16:
+SetObject16::
 	ld a, d                    ; Load the X coordinate from D
 	ld [hli], a                ; Set the Y coordinate
 	ld a, e                    ; Load the X coordinate from E
@@ -508,6 +518,14 @@ ENDC
 ENDC
 
 	ret
+
+PaletteSGB:
+	db SGB_PAL01 | $01
+	dw C_INTRO_BACK_SGB
+REPT 6
+	dw C_INTRO_BOTTOM_SGB
+ENDR
+	db 0
 
 
 SECTION "Intro Tile data", ROM0, ALIGN[8]

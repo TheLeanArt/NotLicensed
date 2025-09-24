@@ -8,7 +8,9 @@ TARGET = intro.gbc
 SYM = intro.sym
 
 RGBLINKFLAGS = -n $(SYM)
-RGBFIXFLAGS  = -v -p 0xFF -t $(TITLE) -c
+RGBFIXFLAGS  = -v -p 0xFF -t $(TITLE) -c \
+	--sgb-compatible --old-licensee 0x33
+
 RGBASMFLAGS  = -I inc -I art
 RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro \
 	# -D INTRO_SONG=intro_song \
@@ -22,6 +24,7 @@ OBJS = \
 	src/intro/intro_drop.o \
 	src/intro/intro_lut.o \
 	src/oamdma.o \
+	src/sgb.o \
 	# src/intro/intro_song.o \
 	# src/hUGEDriver.o \
 	
@@ -29,6 +32,7 @@ INC = \
 	inc/hardware.inc \
 	inc/common.inc \
 	inc/color.inc \
+	inc/sgb.inc \
 
 INTRO_INC = \
 	inc/intro.inc \
