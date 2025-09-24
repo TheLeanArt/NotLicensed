@@ -215,7 +215,7 @@ IF DEF(FADEOUT)
 	jr z, .fadeOutSGB          ; If not, proceed to fade out SGB
 
 .fadeOutGBC
-	ld h, HIGH(FadeOutLUT)     ; Load upper LUT address byte into H
+	ld hl, FadeOutLUT          ; Load LUT address into HL
 	call ReadLUT               ; Read color value
 	and 1                      ; Isolate the lower bit
 	add a                      ; Multiply by 2
@@ -232,7 +232,7 @@ IF DEF(FADEOUT)
 .fadeOutSGB
 	bit 0, a                   ; Is the lower bit set?
 	jr nz, .fadeOutDone        ; If yes, proceed to play sound
-	ld h, HIGH(FadeOutSGBLUT)  ; Load upper LUT address byte into H
+	ld hl, FadeOutSGBLUT       ; Load LUT address into HL
 	call ReadLUT               ; Read color value
 	ld hl, wPacketBuffer + 8   ; Load final buffer address into HL
 	call WriteThreeColorsSGB   ; Write colors 3, 2 and 1
@@ -526,7 +526,8 @@ IF DEF(FADEOUT)
 
 SECTION "ReadLUT", ROM0
 ReadLUT:
-	ld l, a                    ; Load the adjusted step into L
+	add l                      ; Add lower address byte
+	ld l, a                    ; Load the result into L
 	res 0, l                   ; Clear the lowest bit
 	ld c, [hl]                 ; Load lower byte into C
 	inc l                      ; Increment lower LUT address byte
@@ -550,7 +551,7 @@ WriteColorSGB:
 	ret
 
 
-SECTION "FadeOutLUT", ROMX, ALIGN[8]
+SECTION "FadeOutLUT", ROMX, ALIGN[1]
 IF C_INTRO_BOTTOM_SGB == C_INTRO_BOTTOM && C_INTRO_BACK_SGB == C_INTRO_BACK
 FadeOutSGBLUT:
 ENDC
@@ -566,7 +567,7 @@ ENDR
 
 IF C_INTRO_BOTTOM_SGB != C_INTRO_BOTTOM || C_INTRO_BACK_SGB != C_INTRO_BACK
 
-SECTION "FadeOutSGBLUT", ROMX, ALIGN[8]
+SECTION "FadeOutSGBLUT", ROMX, ALIGN[1]
 FadeOutSGBLUT:
 DEF FADEOUT_MAX = (FADEOUT_LENGTH - 1)
 FOR I, 0, FADEOUT_LENGTH
