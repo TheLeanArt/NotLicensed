@@ -46,16 +46,21 @@ INTRO_1BPP = \
 	art/intro/intro_d.1bpp \
 	art/intro/intro_o.1bpp \
 
+INTRO_2BPP = \
+	art/intro/intro_not.2bpp \
+	art/intro/intro_top_0.2bpp \
+	art/intro/intro_by.2bpp \
+
 all: $(TARGET)
 
 clean:
-	rm -f $(TARGET) $(SYM) $(OBJS) $(INTRO_1BPP)
+	rm -f $(TARGET) $(SYM) $(OBJS) $(INTRO_1BPP) $(INTRO_2BPP)
 
 $(TARGET): $(OBJS)
 	$(RGBLINK) $(RGBLINKFLAGS) $^ -o $@
 	$(RGBFIX) $(RGBFIXFLAGS) $@
 
-src/intro/intro_main.o: src/intro/intro_main.asm $(INC) $(INTRO_INC) $(INTRO_1BPP)
+src/intro/intro_main.o: src/intro/intro_main.asm $(INC) $(INTRO_INC) $(INTRO_1BPP) $(INTRO_2BPP)
 	$(RGBASM) $(RGBASMFLAGS_INTRO) $< -o $@
 
 src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
@@ -69,3 +74,6 @@ src/start.o: src/start.asm $(INC) $(INTRO_INC)
 
 art/intro/%.1bpp: art/intro/%.png
 	$(RGBGFX) -Z -d1 $< -o $@
+
+art/intro/%.2bpp: art/intro/%_gray.png
+	$(RGBGFX) -c gbc:art/gray.pal $< -o $@

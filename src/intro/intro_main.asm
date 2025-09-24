@@ -40,8 +40,10 @@ SECTION "Intro", ROM0
 Intro::
 	ldh a, [hFlags]            ; Load our flags into the A register
 	bit B_FLAGS_GBC, a         ; Are we running on GBC?
-	call nz, SetPalettes       ; If yes, set palettes
+	jr z, .cont                ; If not, proceed to initialize objects
+	call SetPalettes           ; Set GBC palettes
 
+.cont
 	call InitTop               ; Initialize our objects
 
 .clearOAMLoop
@@ -52,12 +54,9 @@ Intro::
 	jr nz, .clearOAMLoop       ; If not, continue looping
 
 IF DEF(COLOR8)
-	ld de, TopTiles
+	ld de, TopTiles2
 	ld hl, STARTOF(VRAM) | T_INTRO_NOT_2 << 4
-	call CopyTopPostDouble
-	dec c
-	call CopyTopSingle
-	ld e, LOW(RegTiles)
+	call CopyTopTriple
 	ld l, LOW(T_INTRO_REG << 4) - 8
 ELSE
 	ld de, RegTiles
@@ -95,7 +94,7 @@ ENDC
 
 IF DEF(INTRO_SONG)
 	ld hl, INTRO_SONG          ; Load the song address into the HL register
-	call hUGE_init             ; Initialize the audio
+	call hUGE_init             ; Initialize song
 ENDC
 
 	ldh a, [hFlags]            ; Load our flags into the A register
@@ -143,7 +142,7 @@ REPT 4
 	ld [hli], a                ; Set the value
 ENDR
 
-IF C_INTRO_BY != C_INTRO_BOTTOM || DEF(COLOR8)
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM || DEF(COLOR8)
 
 	bit B_FLAGS_GBC, c         ; Are we running on GBC?
 	jr z, .cont2               ; If not, proceed to prevent lag
@@ -226,21 +225,21 @@ ENDC
 
 
 SECTION "Intro Subroutines", ROM0
-CopyTopPostDouble:
-	ld c, 0                    ; Filter out bitplane 0
+CopyTopTriple:
 	call CopyTopSingle         ; Copy the first tile
 	; Fall through
 
+CopyTopDouble:
+	call CopyTopSingle         ; Copy the tile before last
+	; Fall through
+
 CopyTopSingle:
+	ld b, TILE_SIZE            ; Set the loop counter
 	ld a, l                    ; Load the value in L into A
-	add TILE_SIZE              ; Add tile size
+	add b                      ; Add tile size
 	ld l, a                    ; Load the result into L
-	ld b, 8                    ; Set the loop counter
 .loop
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ld a, [de]                 ; Load a byte from the address DE points to into the A register
-	and c                      ; Filter the value in A
-	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
 	ld a, [de]                 ; Load a byte from the address DE points to into the A register
 	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
 	inc e                      ; Increment the source pointer in E
@@ -250,10 +249,11 @@ CopyTopSingle:
 
 CopyTopPreSafe:
 .loop1
+	ld b, TILE_SIZE / 2        ; Set the loop counter
 	ld a, l                    ; Load the value in L into A
-	add TILE_SIZE              ; Add tile size
+	add b                      ; Add tile size
+	add b                      ; ...
 	ld l, a                    ; Load the result into L
-	ld b, 8                    ; Set the loop counter
 .loop2
 	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld a, [de]                 ; Load a byte from the address DE points to into the A register
@@ -384,11 +384,11 @@ SetObject16:
 
 Color8:
 
-IF C_INTRO_BY != C_INTRO_BOTTOM
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
 	push de
 	ld hl, STARTOF(VRAM) | (T_INTRO_BY - 2) << 4
-	ld de, TopTiles.by
-	call CopyTopPostDouble
+	ld de, ByTiles
+	call CopyTopDouble
 	pop de
 ENDC
 
@@ -466,6 +466,7 @@ ENDC
 SetPalette:
 	ld a, BGPI_AUTOINC
 	ld [hli], a
+
 IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
 	ld a, LOW(C_INTRO_BACK)
 	ld [hl], a
@@ -475,6 +476,7 @@ ELSE
 	ld [hl], c
 	ld [hl], b
 ENDC
+
 IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
 	IF C_INTRO_BOTTOM
 		ld a, LOW(C_INTRO_BOTTOM)
@@ -482,7 +484,7 @@ IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
 		xor a
 	ENDC
 	ld [hl], a
-IF C_INTRO_BY != C_INTRO_BOTTOM
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
 	ld [hl], a
 ELSE
 	ld [hli], a
@@ -492,16 +494,27 @@ ELSE
 	ld [hl], c
 	ld [hl], b
 ENDC
-IF C_INTRO_BY != C_INTRO_BOTTOM
-	ld bc, C_INTRO_BY
+
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
+	ld bc, C_INTRO_BY1
+	ld [hl], c
+	ld [hl], b
+IF C_INTRO_BY2 != C_INTRO_BY1
+	ld bc, C_INTRO_BY2
+ENDC
 	ld [hl], c
 	ld [hl], b
 	inc l
 ENDC
+
 	ret
 
 
 SECTION "Intro Tile data", ROM0, ALIGN[8]
+TopTiles2:
+	INCBIN "intro_not.2bpp"
+	INCBIN "intro_top_0.2bpp"
+.end
 
 RegTiles:
 	INCBIN "intro_reg.1bpp"
@@ -537,3 +550,7 @@ FOR I, 0, 256, 2
 	INCBIN "intro_e.1bpp", I, 1
 ENDR
 .end
+
+SECTION "Grayscale Intro Tile data", ROM0, ALIGN[8]
+ByTiles:
+	INCBIN "intro_by.2bpp"
