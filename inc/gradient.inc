@@ -3,6 +3,8 @@
 ; Copyright (c) 2025 Dmitry Shechtman
 
 
+include "color.inc"
+
 IF !DEF(GRADIENT_STEP)
 	DEF GRADIENT_STEP        EQU  8
 ENDC

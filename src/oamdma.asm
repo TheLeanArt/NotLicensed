@@ -5,7 +5,6 @@
 include "hardware.inc"
 include "common.inc"
 include "defs.inc"
-include "color.inc"
 include "gradient.inc"
 
 
@@ -32,6 +31,8 @@ VBlank::
 	push af
 	push bc
 	call hFixedOAMDMA
+
+IF DEF(GRADIENT)
 	jr STAT.cont
 
 
@@ -62,10 +63,23 @@ STAT:
 	inc c
 	ld a, [bc]
 	ldh [hColorHigh], a
+ENDC
+
 	pop bc
 	pop af
 	reti
 
+
+IF !DEF(GRADIENT)
+
+SECTION "STAT Vector", ROM0[$48]
+STAT:
+	reti
+
+ENDC
+
+
+IF DEF(GRADIENT)
 
 SECTION "ColorLUT", ROM0, ALIGN[8]
 ColorLUT:
@@ -75,6 +89,8 @@ ENDR
 REPT GRADIENT_PADDING
 	dw C_GRADIENT_BOTTOM
 ENDR
+
+ENDC
 
 
 SECTION "CopyOAMDMA", ROM0
@@ -117,11 +133,15 @@ hFixedOAMDMA::
 	ds FixedOAMDMA.end - FixedOAMDMA
 
 
+IF DEF(GRADIENT)
+
 SECTION "Current Color", HRAM
 hColorLow::
 	db
 hColorHigh::
 	db
+
+ENDC
 
 
 SECTION "Shadow OAM", WRAM0, ALIGN[8]

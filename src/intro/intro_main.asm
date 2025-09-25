@@ -75,26 +75,33 @@ Intro::
 	dec a                      ; Set A to $FF
 	ldh [rOBP0], a             ; Set the default object palette
 
+IF DEF(GRADIENT)
+
 IF LOW(C_GRADIENT_TOP) != $FF
-	ld a, LOW(C_GRADIENT_TOP)
+	ld a, LOW(C_GRADIENT_TOP)  ; Load background color's lower byte into the A register
 ENDC
 	ldh [hColorLow], a         ; Set background color's lower byte
 
 IF HIGH(C_GRADIENT_TOP) != LOW(C_GRADIENT_TOP)
-	ld a, HIGH(C_GRADIENT_TOP)
+	ld a, HIGH(C_GRADIENT_TOP) ; Load background color's upper byte into the A register
 ENDC
 	ldh [hColorHigh], a        ; Set background color's upper byte
 
-IF DEF(GRADIENT)
+	ldh a, [hFlags]            ; Load our flags into the A register
+	bit B_FLAGS_GBC, a         ; Are we running on GBC?
+	ld a, IE_VBLANK            ; Load the flag to enable the VBlank interrupt into A
+	jr z, .setIE               ; If not, proceed to set the interrupt enable register
 	ld a, STAT_LYC             ; Load the flag to enable LYC STAT interrupts into A
 	ldh [rSTAT], a             ; Load the prepared flag into rSTAT to enable the LY=LYC interrupt source 
-ASSERT (FLAGS_GBC == IE_STAT)
-	ldh a, [hFlags]            ; Load our flags into the A register
-	and FLAGS_GBC              ; Enable the STAT interrupt iff the GBC flag is set
-	or IE_VBLANK               ; Enable the VBlank interrupt
+	ld a, IE_VBLANK | IE_STAT  ; Load the flag to enable the VBlank and STAT interrupts into A
+
 ELSE
+
 	ld a, IE_VBLANK            ; Load the flag to enable the VBlank interrupt into A
+
 ENDC
+
+.setIE
 	ldh [rIE], a               ; Load the prepared flag into the interrupt enable register
 	xor a                      ; Set A to zero
 	ldh [rIF], a               ; Clear any lingering flags from the interrupt flag register to avoid false interrupts
