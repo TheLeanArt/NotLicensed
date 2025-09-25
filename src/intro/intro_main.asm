@@ -246,8 +246,6 @@ ENDC
 	cp OBJ_INTRO_END * OBJ_SIZE; End object reached?
 	jr nz, .bottomLoop         ; If not, continue to loop
 
-	call hFixedOAMDMA          ; Prevent lag
-
 IF DEF(FADEOUT)
 
 	ldh a, [hFlags]            ; Load our flags into the A register
