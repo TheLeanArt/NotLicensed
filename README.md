@@ -45,7 +45,7 @@ The intro provides numerous customisation hooks via `defs.inc`. Following is a n
   * `INTRO_SONG_DELAY`: song delay in ticks.
 * `COLOR8`: enable multi-colour top letters on GBC.
   * `C_INTRO_TOP`: default top letters' colour.
-  * `C_INTRO_TOP_`_n_: (0 <= _n_ <= 7): _n_th top letter colour.
+  * `C_INTRO_TOP_`_n_: (0 <= _n_ <= 7): _n_-th top letter colour.
   * `C_INTRO_BY`: default _by_ letters' colour.
     * `C_INTRO_BY1`: _b_ letter colour.
     * `C_INTRO_BY2`: _y_ letter colour.
