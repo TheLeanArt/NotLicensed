@@ -38,20 +38,32 @@ make
 
 ### Customisations
 
-**Note:** Make sure that any the following isn't preceded in Makefile by any commented-out lines. Otherwise, the changes will have no effect!
+The intro provides numerous customisation hooks via `defs.inc`. Following is a non-exhaustive list:
 
-* **INTRO_SONG:** remove the `#` from `-D INTRO_SONG=intro_song`, `src/intro/intro_song.o` and `src/hUGEDriver.o` in Makefile (replace `intro_song` with your own hUGETracker song).
-* **INTRO_SONG_DELAY:** remove the `#` from `-D INTRO_SONG_DELAY=$10` (replace `10` with the appropriate hexadecimal delay in ticks).
-* **COLOR8:** remove the `#` from `-D COLOR8` in Makefile.
-* **GRADIENT:** remove the `#` from `-D GRADIENT` in Makefile.
-* **FADEOUT:** remove the `#` from `-D FADEOUT` in Makefile.
-* **EN_GB:** remove the `#` from `-D EN_GB` in Makefile.
+* `INTRO_SONG`: hUGETracker song descriptor.
+  * Uncomment `src/intro/intro_song.o` and `src/hUGEDriver.o` in Makefile (and then replace `intro_song` with your own song).
+  * `INTRO_SONG_DELAY`: song delay in ticks.
+* `COLOR8`: enable multi-colour top letters on GBC.
+  * `C_INTRO_TOP`: default top letters' colour.
+  * `C_INTRO_TOP_`_n_: (0 <= _n_ <= 7): _n_th top letter colour.
+  * `C_INTRO_BY`: default _by_ letters' colour.
+    * `C_INTRO_BY1`: _b_ letter colour.
+    * `C_INTRO_BY2`: _y_ letter colour.
+* `GRADIENT`: enable background gradient on GBC.
+  * `C_GRADIENT_TOP`: gradient's top colour.
+  * `C_GRADIENT_BOTTOM`: gradient's bottom colour.
+* `FADEOUT`: enable fadeout on GBC/SGB.
+* `EN_GB`: display `licenced` instead of `licensed`.
 
-Once the changes are applied, execute
+Common colour values are defined in `color.inc`.
+
+After changing `Makefile` make sure to execute
 
 ```
 make clean all
 ```
+
+**Note:** Uncommented lines that are part of a Makefile multi-line definition must not be preceded by commented-out ones.
 
 ## Deployments
 
