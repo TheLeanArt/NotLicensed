@@ -220,32 +220,31 @@ ENDC
 	rst WaitVBlank             ; Wait for the next VBlank
 	ld d, HIGH(IntroLUT)       ; Set the upper address byte to the start of our LUT
 
-	ld c, LOW(rSCY)            ; Start from the background's Y coordinate
-	call SetOddball            ; Update the background's coordinates
-
-	ld c, LOW(rWY)             ; Start from the window's Y coordinate
-	call SetOddball            ; Update the window's coordinates
+	call SetOddballs           ; Update background and window coordinates
 
 	INTRO_META_SET E           ; Update E's tiles
 	set 7, e                   ; Advance to the second half-page
 
 	INTRO_META_SET N2          ; Update N2's tiles
 	res 7, e                   ; Go back to the first half-page
-	inc d                      ; Advance to the next page
 
 	ld hl, wShadowOAM          ; Start from the top
-	ld b, OBJ_INTRO_END * 2    ; Loop all the way to the end
 
-.pageLoop
-	ld a, [de]                 ; Load the Y/tile ID value
-	ld [hli], a                ; Set Y/tile ID
-	set 7, e                   ; Advance to the second half-page
-	ld a, [de]                 ; Load the X/attributes value
-	ld [hli], a                ; Set X/attributes
-	res 7, e                   ; Go back to the first half-page
-	inc d                      ; Advance to the next page
-	dec b                      ; Decrement the page counter
-	jr nz, .pageLoop           ; Continue to loop until the end
+.topLoop
+	rst SetTopEven             ; Decrement Y and copy X
+	inc l                      ; Skip tile ID
+	inc l                      ; Skip attributes
+	rst SetTopOdd              ; Decrement Y and copy X
+	inc l                      ; Skip tile ID
+	inc l                      ; Skip attributes
+	cp OBJ_INTRO_TOP_END * OBJ_SIZE - 2 ; Bottom object reached?
+	jr nz, .topLoop            ; If not, continue to loop
+
+.bottomLoop
+	call CopyEven              ; Copy Y/tile ID
+	call CopyOdd               ; Copy X/attributes
+	cp OBJ_INTRO_END * OBJ_SIZE; End object reached?
+	jr nz, .bottomLoop         ; If not, continue to loop
 
 	call hFixedOAMDMA          ; Prevent lag
 
@@ -317,7 +316,41 @@ ENDC
 	ret
 
 
+SECTION "SetTopEven", ROM0[$20]
+SetTopEven:
+	dec [hl]                   ; Decrement the Y coordinate
+	inc l                      ; Advance to the X coordinate
+	; Fall through
+
+CopyEven:
+	inc d                      ; Advance to the next page
+	ld a, [de]                 ; Load the Y/tile ID value
+	ld [hli], a                ; Set Y/tile ID
+	set 7, e                   ; Advance to the second half-page
+	ret
+
+
+SECTION "SetTopOdd", ROM0[$28]
+SetTopOdd:
+	dec [hl]                   ; Decrement the Y coordinate
+	inc l                      ; Advance to the X coordinate
+	; Fall through
+
+CopyOdd:
+	ld a, [de]                 ; Load the X/attributes value
+	ld [hli], a                ; Set X/attributes
+	res 7, e                   ; Go back to the first half-page
+	ld a, l                    ; Load the value in L into A
+	ret
+
+
 SECTION "Intro Subroutines", ROM0
+SetOddballs:
+	ld c, LOW(rSCY)            ; Start from the background's Y coordinate
+	call SetOddball            ; Update the background's coordinates
+	ld c, LOW(rWY)             ; Proceed to the window's Y coordinate
+	; Fall through
+
 SetOddball:
 	ld a, [de]                 ; Load the Y value
 	ldh [c], a                 ; Set the Y coordinate
