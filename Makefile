@@ -12,13 +12,7 @@ RGBFIXFLAGS  = -v -p 0xFF -t $(TITLE) -c \
 	--sgb-compatible --old-licensee 0x33
 
 RGBASMFLAGS  = -I inc -I art
-RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro \
-	# -D INTRO_SONG=intro_song \
-	# -D INTRO_SONG_DELAY=$10 \
-	# -D COLOR8 \
-	# -D GRADIENT \
-	# -D FADEOUT \
-	# -D EN_GB
+RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro
 
 OBJS = \
 	src/start.o \
@@ -34,6 +28,7 @@ OBJS = \
 INC = \
 	inc/hardware.inc \
 	inc/common.inc \
+	inc/defs.inc \
 	inc/color.inc \
 	inc/gradient.inc \
 	inc/sgb.inc \

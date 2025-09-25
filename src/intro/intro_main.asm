@@ -4,6 +4,7 @@
 
 include "hardware.inc"
 include "common.inc"
+include "defs.inc"
 include "intro.inc"
 include "gradient.inc"
 include "sgb.inc"
