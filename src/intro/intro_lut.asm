@@ -43,6 +43,41 @@ SECTION "Intro LUT", ROMX, ALIGN[8]
 
 IntroLUT::
 
+SCY_LUT:
+FOR T, 0, 128
+	db T
+ENDR
+
+SCX_LUT:
+FOR T, 0, 128
+	db -T
+ENDR
+
+ASSERT (LOW(@) == 0)
+
+WY_LUT:
+FOR T, 0, 64
+	db LOW(64 + T * 2)
+ENDR
+	ds 64, -1
+
+WX_LUT:
+FOR T, 0, 128
+	db LOW(X_INTRO_N2 + T * 2)
+ENDR
+
+E_LUT:
+FOR T, 0, 128
+	db T_INTRO_E + ((T >> 3) & 7) << 2
+ENDR
+
+N2_LUT:
+FOR T, 0, 128
+	db T_INTRO_N2 + ((T >> 2) & 7) << 2
+ENDR
+
+ASSERT (LOW(@) == 0)
+
 FOR I, 0, 2
 
 .y\@
@@ -67,14 +102,14 @@ ASSERT (LOW(@) == 0)
 
 ENDR
 
-TOP_LUT 0, -7
-TOP_LUT 1, -5
-TOP_LUT 2, -3
-TOP_LUT 3, -1
-TOP_LUT 4,  1
-TOP_LUT 5,  3
-TOP_LUT 6,  5
-TOP_LUT 7,  7
+	TOP_LUT 0, -7
+	TOP_LUT 1, -5
+	TOP_LUT 2, -3
+	TOP_LUT 3, -1
+	TOP_LUT 4,  1
+	TOP_LUT 5,  3
+	TOP_LUT 6,  5
+	TOP_LUT 7,  7
 
 N0_LUT:
 
@@ -266,38 +301,3 @@ ENDR
 ASSERT (LOW(@) == 0)
 
 ENDR
-
-SCY_LUT:
-FOR T, 0, 128
-	db T
-ENDR
-
-SCX_LUT:
-FOR T, 0, 128
-	db -T
-ENDR
-
-ASSERT (LOW(@) == 0)
-
-WY_LUT:
-FOR T, 0, 64
-	db LOW(64 + T * 2)
-ENDR
-	ds 64, -1
-
-WX_LUT:
-FOR T, 0, 128
-	db LOW(X_INTRO_N2 + T * 2)
-ENDR
-
-E_LUT:
-FOR T, 0, 128
-	db T_INTRO_E + ((T >> 3) & 7) << 2
-ENDR
-
-N2_LUT:
-FOR T, 0, 128
-	db T_INTRO_N2 + ((T >> 2) & 7) << 2
-ENDR
-
-ASSERT (LOW(@) == 0)
