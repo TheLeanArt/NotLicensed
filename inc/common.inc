@@ -17,6 +17,8 @@ DEF FLAGS_GBC            EQU   1 << B_FLAGS_GBC
 DEF FLAGS_GBA            EQU   1 << B_FLAGS_GBC | 1 << B_FLAGS_GBA
 DEF FLAGS_DMG0           EQU   1 << B_FLAGS_DMG0
 
+DEF FLAGS_MASK           EQU   FLAGS_SGB | FLAGS_GBC
+
 
 ; Adapted from Simple GB ASM Examples by Dave VanEe
 ; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
@@ -78,9 +80,8 @@ ENDM
 ; @param \3 Step count
 ; @param \4 Step
 MACRO INTER_COLOR
-	DEF _MAX = (\3 - 1)
-	DEF _R = ((((\1      ) & $1F) * (_MAX - \4) + ((\2      ) & $1F) * \4) / _MAX)
-	DEF _G = ((((\1 >>  5) & $1F) * (_MAX - \4) + ((\2 >>  5) & $1F) * \4) / _MAX)
-	DEF _B = ((((\1 >> 10) & $1F) * (_MAX - \4) + ((\2 >> 10) & $1F) * \4) / _MAX)
+	DEF _R = ((((\1      ) & $1F) * (\3 - \4) + ((\2      ) & $1F) * (\4 + 1)) / \3)
+	DEF _G = ((((\1 >>  5) & $1F) * (\3 - \4) + ((\2 >>  5) & $1F) * (\4 + 1)) / \3)
+	DEF _B = ((((\1 >> 10) & $1F) * (\3 - \4) + ((\2 >> 10) & $1F) * (\4 + 1)) / \3)
 	dw {d:_B} << 10 | {d:_G} << 5 | {d:_R}
 ENDM
