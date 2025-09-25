@@ -12,7 +12,6 @@ include "sgb.inc"
 
 MACRO INTRO_META_INIT
 	ld hl, MAP_INTRO_\1 + ROW_INTRO_\1 * TILEMAP_WIDTH + COL_INTRO_\1
-	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld a, T_INTRO_\1           ; Load top left tile ID
 	call SetMetaTile           ; Set the meta-tile
 ENDM
@@ -59,6 +58,7 @@ Intro::
 	call SGB_TryFreeze         ; Freeze SGB display
 
 	call ClearBackground       ; Clear the logo from the background
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	INTRO_META_INIT BY         ; Draw BY on the background
 	call SetWindow             ; Draw the logo on the window
 
@@ -191,6 +191,7 @@ ENDC
 	inc e                      ; Increment the step counter
 	jr nz, .dropLoop           ; Continue to loop unless 256 reached
 
+	rst WaitVBlank             ; Wait for the next VBlank
 	call ClearWindow           ; Remove the logo from the window
 	INTRO_META_INIT E          ; Draw E on the background
 	INTRO_META_INIT N2         ; Draw N2 on the window
