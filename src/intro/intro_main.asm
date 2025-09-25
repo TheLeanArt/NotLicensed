@@ -37,8 +37,9 @@ ENDM
 MACRO INTRO_BOTTOM_INIT
 	ld b, T_INTRO_\1           ; Load tile ID
 	ld e, X_INTRO_\1           ; Load X coordinate
-IF I == 5
-	jr SetObject16             ; Set the object and return
+IF \1 == 5
+	; Fall through
+	ASSERT (@ == SetTwoObjects16)
 ELIF INTRO_\1_WIDTH == 1
 	call SetObject16           ; Set the object
 ELSE
