@@ -20,29 +20,6 @@ SECTION "Intro LUT", ROMX, ALIGN[8]
 
 IntroLUT::
 
-SCY_LUT:
-FOR T, 0, 128
-	db T
-ENDR
-
-SCX_LUT:
-FOR T, 0, 128
-	db -T
-ENDR
-
-ASSERT (LOW(@) == 0)
-
-WY_LUT:
-FOR T, 0, 64
-	db LOW(64 + T * 2)
-ENDR
-	ds 64, -1
-
-WX_LUT:
-FOR T, 0, 128
-	db LOW(X_INTRO_N2 + T * 2)
-ENDR
-
 E_LUT:
 FOR T, 0, 128
 	db T_INTRO_E + ((T >> 3) & 7) << 2
@@ -262,4 +239,27 @@ ENDR
 
 ASSERT (LOW(@) == 0)
 
+ENDR
+
+SCY_LUT:
+FOR T, 0, 128
+	db T
+ENDR
+
+SCX_LUT:
+FOR T, 0, 128
+	db -T
+ENDR
+
+ASSERT (LOW(@) == 0)
+
+WY_LUT:
+FOR T, 0, 64
+	db LOW(64 + T * 2)
+ENDR
+	ds 64, -1
+
+WX_LUT:
+FOR T, 0, 128
+	db LOW(X_INTRO_N2 + T * 2)
 ENDR
