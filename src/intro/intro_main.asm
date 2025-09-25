@@ -10,10 +10,19 @@ include "gradient.inc"
 include "sgb.inc"
 
 
+MACRO INIT_VRAM_HL
+	ld hl, MAP_\1 + ROW_\1 * TILEMAP_WIDTH + COL_\1
+ENDM
+
 MACRO INTRO_META_INIT
-	ld hl, MAP_INTRO_\1 + ROW_INTRO_\1 * TILEMAP_WIDTH + COL_INTRO_\1
+	INIT_VRAM_HL INTRO_\1      ; Load the meta-tile address into the HL register
 	ld a, T_INTRO_\1           ; Load top left tile ID
 	call SetMetaTile           ; Set the meta-tile
+ENDM
+
+MACRO INTRO_META_SET
+	INIT_VRAM_HL INTRO_\1      ; Load the meta-tile address into the HL register
+	call SetOddballMetaTile    ; Update the meta-tile
 ENDM
 
 MACRO INTRO_TOP_INIT
@@ -57,10 +66,14 @@ Intro::
 
 	call SGB_TryFreeze         ; Freeze SGB display
 
-	call ClearBackground       ; Clear the logo from the background
+	INIT_VRAM_HL LOGO          ; Load the background logo address into the HL register
+	call ClearLogo             ; Clear the logo from the background
 	rst WaitVRAM               ; Wait for VRAM to become accessible
 	INTRO_META_INIT BY         ; Draw BY on the background
-	call SetWindow             ; Draw the logo on the window
+	
+	INIT_VRAM_HL LOGO2         ; Load the window logo address into the HL register
+	ld b, T_LOGO               ; Load the first tile index into the B register
+	call SetLogo               ; Draw the logo on the window
 
 	ld a, Y_INTRO_TOP          ; Load the initial Y value into A
 	ldh [rSCY], a              ; Set the background's Y coordinate
@@ -192,7 +205,8 @@ ENDC
 	jr nz, .dropLoop           ; Continue to loop unless 256 reached
 
 	rst WaitVBlank             ; Wait for the next VBlank
-	call ClearWindow           ; Remove the logo from the window
+	INIT_VRAM_HL LOGO2         ; Load the window logo address into the HL register
+	call ClearLogo             ; Remove the logo from the window
 	INTRO_META_INIT E          ; Draw E on the background
 	INTRO_META_INIT N2         ; Draw N2 on the window
 	call InitBottom            ; Draw the rest of the logo with objects
@@ -212,12 +226,10 @@ ENDC
 	ld c, LOW(rWY)             ; Start from the window's Y coordinate
 	call SetOddball            ; Update the window's coordinates
 
-	ld hl, MAP_INTRO_E + ROW_INTRO_E * TILEMAP_WIDTH + COL_INTRO_E
-	call SetOddballMetaTile    ; Update E's tiles
+	INTRO_META_SET E           ; Update E's tiles
 	set 7, e                   ; Advance to the second half-page
 
-	ld hl, MAP_INTRO_N2 + ROW_INTRO_N2 * TILEMAP_WIDTH + COL_INTRO_N2
-	call SetOddballMetaTile    ; Update N2's tiles
+	INTRO_META_SET N2          ; Update N2's tiles
 	res 7, e                   ; Go back to the first half-page
 	inc d                      ; Advance to the next page
 
@@ -332,13 +344,12 @@ SetMetaTile:
 	ld [hl], a                 ; Set bottom right tile
 	ret
 
-ClearBackground:
-	ld hl, MAP_LOGO + ROW_LOGO * TILEMAP_WIDTH + COL_LOGO
-	call ClearLogo
+ClearLogo:
+	call .logo
 	ld l, LOW(((ROW_LOGO + 1) * TILEMAP_WIDTH) + COL_LOGO)
 	; Fall through
 
-ClearLogo:
+.logo:
 	ld c, LOGO_WIDTH + 1       ; Clear ®
 .loop
 	rst WaitVRAM               ; Wait for VRAM to become accessible
@@ -348,17 +359,9 @@ ClearLogo:
 	jr nz, .loop
 	ret
 
-ClearWindow:
-	ld hl, TILEMAP1 + COL_LOGO
-	call ClearLogo
-	ld l, TILEMAP_WIDTH + COL_LOGO
-	jr ClearLogo
-
-SetWindow:
-	ld hl, TILEMAP1 + COL_LOGO
-	ld b, T_LOGO
+SetLogo:
 	call .logo
-	ld l, TILEMAP_WIDTH + COL_LOGO
+	ld l, (ROW_LOGO2 + 1) * TILEMAP_WIDTH + COL_LOGO
 	; Fall through
 
 .logo:

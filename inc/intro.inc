@@ -25,6 +25,10 @@ DEF MAP_LOGO             EQU TILEMAP0
 DEF COL_LOGO             EQU   4
 DEF ROW_LOGO             EQU   8
 
+DEF MAP_LOGO2            EQU TILEMAP1
+DEF ROW_LOGO2            EQU   0
+DEF COL_LOGO2            EQU COL_LOGO
+
 DEF MAP_INTRO_BY         EQU TILEMAP0
 DEF ROW_INTRO_BY         EQU   6
 DEF COL_INTRO_BY         EQU  13
