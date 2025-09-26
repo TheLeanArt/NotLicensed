@@ -320,15 +320,17 @@ IntroMain:
 	sub c                      ; Subtract t/8
 	ld b, a                    ; Store t * 3/8 in B
 
-	ld hl, wShadowOAM          ; Start from the top
+	ld a, X_INTRO_NOT          ; Load x_0 into A
+	sub e                      ; Subtract t
+	sub c                      ; Subtract t / 8
+	ld hl, wShadowOAM + OBJ_INTRO_NOT * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_0 - t * 9/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
-	inc l                      ; Move to the X coordinate
-	dec [hl]                   ; Decrement the X coordinate
 
-	ld l, (OBJ_INTRO_NOT + 1) * OBJ_SIZE
+	add TILE_WIDTH             ; Add 8
+	ld l, (OBJ_INTRO_NOT + 1) * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_0 - t * 9/8 + 8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
-	inc l                      ; Move to the X coordinate
-	dec [hl]                   ; Decrement the X coordinate
 
 	ld a, X_INTRO_TOP_3        ; Load x_4 into A
 	sub c                      ; Subtract t/8
