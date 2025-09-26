@@ -3,6 +3,7 @@
 ; Copyright (c) 2025 Dmitry Shechtman
 
 include "hardware.inc"
+include "defs.inc"
 include "intro.inc"
 
 
@@ -14,9 +15,14 @@ IntroDropLUT::
 FOR T, 0, 64
 	db (T * T) / 64 + 4
 ENDR
-	db 72, 71, 70, 70, 71, 72
+	db Y_INTRO_FINAL + 0
+	db Y_INTRO_FINAL - 1
+	db Y_INTRO_FINAL - 2
+	db Y_INTRO_FINAL - 2
+	db Y_INTRO_FINAL - 1
+	db Y_INTRO_FINAL + 0
 
-	ds 256 - LOW(@ - IntroDropLUT), 72
+	ds 256 - LOW(@ - IntroDropLUT), Y_INTRO_FINAL
 
 .SCY
 

@@ -4,16 +4,22 @@
 
 include "hardware.inc"
 include "common.inc"
+include "defs.inc"
 include "intro.inc"
+include "gradient.inc"
+include "sgb.inc"
 
+
+MACRO INIT_VRAM_HL
+	ld hl, MAP_\1 + ROW_\1 * TILEMAP_WIDTH + COL_\1
+ENDM
 
 MACRO INTRO_DBL_INIT
-	ld hl, MAP_INTRO_\1 + ROW_INTRO_\1 * TILEMAP_WIDTH + COL_INTRO_\1
-	rst WaitVRAM               ; Wait for VRAM to become accessible
+	INIT_VRAM_HL INTRO_\1      ; Load the double tile address into the HL register
 	ld a, T_INTRO_\1           ; Load left tile ID
 	ld [hli], a                ; Set left tile and advance to the right
-	inc a                      ; Base + 1
-	ld [hl], a                 ; Set right tile
+	inc a                      ; Increment tile ID
+	ld [hli], a                ; Set right tile
 ENDM
 
 MACRO INTRO_TOP_INIT
@@ -30,51 +36,99 @@ SECTION "Intro", ROM0
 Intro::
 	ldh a, [hFlags]            ; Load our flags into the A register
 	bit B_FLAGS_GBC, a         ; Are we running on GBC?
-	call nz, SetPalettes       ; If yes, set palettes
+	jr z, .trySGB              ; If not, proceed to try setting SGB palettes
+	call SetPalettes           ; Set GBC palettes
+	jr .cont                   ; Proceed to initialize objects
 
+.trySGB
+	ld hl, PaletteSGB          ; Load the palette address into the HL register
+	call SGB_TrySendPacket     ; Try setting SGB palettes
+
+.cont
 	call InitTop               ; Initialize our objects
+	call ClearOAM              ; Clear the remaining shadow OAM
+	call CopyIntro             ; Copy our tiles
 
-.clearOAMLoop
-	xor a                      ; Set A to zero
-	ld [hli], a                ; Set and advance
-	ld a, l                    ; Load the lower address byte into A
-	cp OAM_SIZE                ; End of OAM reached?
-	jr nz, .clearOAMLoop       ; If not, continue looping
+	call SGB_TryFreeze         ; Freeze SGB display
 
-	ld de, IntroTiles
-	ld hl, STARTOF(VRAM) | T_INTRO_START << 4
-	COPY_1BPP_SAFE Intro       ; Copy 1bpp tiles
-
-	call ClearBackground       ; Clear the logo from the background
+	INIT_VRAM_HL LOGO          ; Load the background logo address into the HL register
+	call ClearLogo             ; Clear the logo from the background
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	INTRO_DBL_INIT BY          ; Draw BY on the background
-	call SetWindow             ; Draw the logo on the window
+	
+	INIT_VRAM_HL LOGO2         ; Load the window logo address into the HL register
+	ld b, T_LOGO               ; Load the first tile index into the B register
+	call SetLogo               ; Draw the logo on the window
 
 	ld a, Y_INTRO_TOP          ; Load the initial Y value into A
 	ldh [rSCY], a              ; Set the background's Y coordinate
-	ld a, Y_INTRO_WINDOW       ; Load the initial WY value into A
 	ldh [rWY], a               ; Set the window's Y coordinate
 	ld a, WX_OFS               ; Load the window's X value into A
 	ldh [rWX], a               ; Set the window's X coordinate
 
-	ld a, %11_11_11_00         ; Display everything as black
-	ldh [rOBP0], a             ; Set the default object palette
 	xor a                      ; Display everything as white
 	ldh [rOBP1], a             ; Set the alternate object palette
-	
-	ld a, IE_VBLANK            ; Load the flag to enable the VBlank and STAT interrupts into A
+	ldh [rLYC], a              ; Set which line to trigger the LY=LYC interrupt on
+
+	dec a                      ; Set A to $FF
+	ldh [rOBP0], a             ; Set the default object palette
+
+IF DEF(GRADIENT)
+
+IF LOW(C_INTRO_GRADIENT_TOP) != $FF
+	ld a, LOW(C_INTRO_GRADIENT_TOP)
+ENDC
+	ldh [hColorLow], a         ; Set background color's lower byte
+
+IF HIGH(C_INTRO_GRADIENT_TOP) != LOW(C_INTRO_GRADIENT_TOP)
+	ld a, HIGH(C_INTRO_GRADIENT_TOP)
+ENDC
+	ldh [hColorHigh], a        ; Set background color's upper byte
+
+IF DEF(INTRO_GRADIENT)
+
+	ldh a, [hFlags]            ; Load our flags into the A register
+	bit B_FLAGS_GBC, a         ; Are we running on GBC?
+	ld a, IE_VBLANK            ; Load the flag to enable the VBlank interrupt into A
+	jr z, .setIE               ; If not, proceed to set the interrupt enable register
+
+	ld de, IntroColorLUT       ; Load the address of our color LUT into DE
+	call CopyColorLUT          ; Copy the color LUT
+	ld a, STAT_LYC             ; Load the flag to enable LYC STAT interrupts into A
+	ldh [rSTAT], a             ; Load the prepared flag into rSTAT to enable the LY=LYC interrupt source 
+	ld a, IE_VBLANK | IE_STAT  ; Load the flag to enable the VBlank and STAT interrupts into A
+
+ELSE
+
+	ld de, C_INTRO_BACK        ; Load the background color into DE
+	call InitColorLUT          ; Initialize the color LUT
+	ld a, IE_VBLANK            ; Load the flag to enable the VBlank interrupt into A
+
+ENDC
+
+ELSE
+
+	ld a, IE_VBLANK            ; Load the flag to enable the VBlank interrupt into A
+
+ENDC
+
+.setIE
 	ldh [rIE], a               ; Load the prepared flag into the interrupt enable register
 	xor a                      ; Set A to zero
 	ldh [rIF], a               ; Clear any lingering flags from the interrupt flag register to avoid false interrupts
 
-	call VBlank                ; Perform our OAM DMA and enable interrupts!
+	call hFixedOAMDMA          ; Perform our OAM DMA
+	ei                         ; Enable interrupts!
 
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_WIN_ON | LCDC_WIN_9C00
 	ldh [rLCDC], a             ; Enable and configure the LCD
 
+	call SGB_TryUnfreeze       ; Unfreeze SGB display
+
 	ldh a, [hFlags]            ; Load our flags into the A register
 	ld c, a                    ; Store the flags in the C register
 	bit B_FLAGS_SGB, a         ; Are we running on SGB?
-	jr z, .drop                ; If not, skip the SGB delay
+	jr z, .drop                ; If not, skip SGB init
 
 	ld b, INTRO_SGB_DELAY      ; ~1 sec delay to make up for the SGB bootup animation
 .waitLoop
@@ -116,6 +170,17 @@ REPT 4
 	ld [hli], a                ; Set the value
 ENDR
 
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM || DEF(COLOR8)
+
+	bit B_FLAGS_GBC, c         ; Are we running on GBC?
+	jr z, .regDone             ; If not, proceed to prevent lag
+	ld a, e                    ; Load the value in E into A
+	cp COLOR8_STEP             ; Coloration step reached?
+	call z, Color8             ; If yes, colorate
+	jr .regDone
+
+ENDC
+
 .regDone
 	call hFixedOAMDMA          ; Prevent lag
 	inc e                      ; Increment the step counter
@@ -124,14 +189,12 @@ ENDR
 
 
 SECTION "Intro Subroutines", ROM0
-
-ClearBackground:
-	ld hl, MAP_LOGO + ROW_LOGO * TILEMAP_WIDTH + COL_LOGO
-	call ClearLogo
+ClearLogo:
+	call .logo
 	ld l, LOW(((ROW_LOGO + 1) * TILEMAP_WIDTH) + COL_LOGO)
 	; Fall through
 
-ClearLogo:
+.logo:
 	ld c, LOGO_WIDTH + 1       ; Clear ®
 .loop
 	rst WaitVRAM               ; Wait for VRAM to become accessible
@@ -141,11 +204,9 @@ ClearLogo:
 	jr nz, .loop
 	ret
 
-SetWindow:
-	ld hl, TILEMAP1 + COL_LOGO
-	ld b, T_LOGO
+SetLogo:
 	call .logo
-	ld l, TILEMAP_WIDTH + COL_LOGO
+	ld l, (ROW_LOGO2 + 1) * TILEMAP_WIDTH + COL_LOGO
 	; Fall through
 
 .logo:
@@ -162,7 +223,7 @@ SetWindow:
 InitTop:
 	ld hl, wShadowOAM + OBJ_INTRO_NOT * OBJ_SIZE
 	ld bc, T_INTRO_NOT << 8    ; Load tile ID and attributes
-	ld de, Y_INTRO_INIT << 8 | X_INTRO_TOP
+	ld de, Y_INTRO_INIT << 8 | X_INTRO_NOT
 	call SetObject             ; Set the first object
 	call SetObject             ; Set the second object
 
@@ -176,17 +237,19 @@ InitReg:
 	ld de, Y_INTRO_REG << 8 | X_INTRO_REG
 ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
 	ldh a, [hFlags]            ; Load our flags into the A register
-	and 1 << B_FLAGS_DMG0      ; Isolate the DMG0 flag
+	and FLAGS_DMG0             ; Isolate the DMG0 flag
 	ld c, a                    ; Load attributes
 	; Fall through
 
-SetObject:
-	ld a, d                    ; Load the X coordinate from D
+SetObject::
+	ld a, d                    ; Load the Y coordinate from D
+.cont1
 	ld [hli], a                ; Set the Y coordinate
 	ld a, e                    ; Load the X coordinate from E
 	ld [hli], a                ; Set the X coordinate
 	add TILE_WIDTH             ; Advance the X coordinate
 	ld e, a                    ; Store the updated X coordinate
+.cont2
 	ld a, b                    ; Load the tile ID from B
 	ld [hli], a                ; Set the tile ID
 	inc b                      ; Advance the tile ID
@@ -194,30 +257,146 @@ SetObject:
 	ld [hli], a                ; Set the attributes
 	ret
 
+Color8:
+
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
+	INIT_VRAM_HL INTRO_BY      ; Load the meta-tile address into the HL register
+	ld a, T_INTRO_BY_2         ; Load left tile ID
+	ld [hli], a                ; Set left tile
+	inc a                      ; Increment tile ID
+	ld [hli], a                ; Set right tile
+ENDC
+
+IF DEF(COLOR8)
+FOR I, 0, 3
+IF I == 0
+	ld hl, wShadowOAM + OAMA_TILEID
+ELSE
+	ld l, I * OBJ_SIZE + OAMA_TILEID
+ENDC
+	ld a, T_INTRO_NOT_2 + I
+	ld [hli], a
+ENDR
+	xor a
+FOR I, 0, 8
+IF I > 0
+	ld l, (I + 2) * OBJ_SIZE + OAMA_FLAGS
+ENDC
+	ld [hl], a
+	inc a
+ENDR
+ENDC
+
+	ret
+
 SetPalettes:
 	ld hl, rBGPI
 	call SetPalette
+
+IF DEF(COLOR8)
+
+FOR I, 0, 8
+	ld a, OBPI_AUTOINC | I << 3 | 2
+	ld [hli], a
+IF I == 0
+IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
+	IF C_INTRO_BOTTOM
+		ld a, LOW(C_INTRO_BOTTOM)
+	ELSE
+		xor a
+	ENDC
+	ld [hl], a
+	ld [hl], a
+ELSE
+	ld bc, C_INTRO_BOTTOM
+	ld [hl], c
+	ld [hl], b
+ENDC
+	ld bc, C_INTRO_NOT
+	ld [hl], c
+	ld [hl], b
+	ld bc, C_INTRO_TOP_0
+ELSE
+DEF _ = (I - 1)
+IF HIGH(C_INTRO_TOP_{d:I}) == HIGH(C_INTRO_TOP_{d:_})
+	ld c, LOW(C_INTRO_TOP_{d:I})
+ELIF LOW(C_INTRO_TOP_{d:I}) == LOW(C_INTRO_TOP_{d:_})
+	ld b, HIGH(C_INTRO_TOP_{d:I})
+ELSE
+	ld bc, C_INTRO_TOP_{d:I}
+ENDC
+ENDC
+	ld [hl], c
+	ld [hl], b
+	dec l
+ENDR
+	ret
+
+ELSE
+
 	; Fall through
+
+ENDC
 
 SetPalette:
 	ld a, BGPI_AUTOINC
 	ld [hli], a
-	ld a, $FF
+
+IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
+	ld a, LOW(C_INTRO_BACK)
 	ld [hl], a
 	ld [hl], a
-	cpl
-REPT 5
+ELSE
+	ld bc, C_INTRO_BACK
+	ld [hl], c
+	ld [hl], b
+ENDC
+
+IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
+	IF C_INTRO_BOTTOM
+		ld a, LOW(C_INTRO_BOTTOM)
+	ELSE
+		xor a
+	ENDC
 	ld [hl], a
-ENDR
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
+	ld [hl], a
+ELSE
 	ld [hli], a
+ENDC
+ELSE
+	ld bc, C_INTRO_BOTTOM
+	ld [hl], c
+	ld [hl], b
+ENDC
+
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
+	ld bc, C_INTRO_BY1
+	ld [hl], c
+	ld [hl], b
+IF C_INTRO_BY2 != C_INTRO_BY1
+	ld bc, C_INTRO_BY2
+ENDC
+	ld [hl], c
+	ld [hl], b
+	inc l
+ENDC
+
 	ret
 
+PaletteSGB:
+	db SGB_PAL01 | $01
+	dw C_INTRO_BACK_SGB
+REPT 6
+	dw C_INTRO_BOTTOM_SGB
+ENDR
+	db 0
 
-SECTION "Intro Tile data", ROM0
 
-IntroTiles:
-	INCBIN "intro_reg.1bpp"
-	INCBIN "intro_not.1bpp"
-	INCBIN "intro_top.1bpp"
-	INCBIN "intro_by.1bpp"
-.end
+IF DEF(INTRO_GRADIENT)
+
+SECTION "IntroColorLUT", ROMX
+IntroColorLUT:
+	GRADIENT_LUT C_INTRO_GRADIENT_TOP, C_INTRO_GRADIENT_BOTTOM
+
+ENDC

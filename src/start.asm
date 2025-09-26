@@ -4,6 +4,8 @@
 
 include "hardware.inc"
 include "common.inc"
+include "defs.inc"
+include "intro.inc"
 
 
 ; Initialization portion adapted from Simple GB ASM Examples by Dave VanEe
@@ -57,17 +59,7 @@ EntryPoint:
 	xor a                      ; Clear the A register
 	ldh [rAUDENA], a           ; Shut down audio circuitry
 
-	; Load the length of the OAMDMA routine into B
-    ; and the low byte of the destination into C
-	ld bc, (FixedOAMDMA.end - FixedOAMDMA) << 8 | LOW(hFixedOAMDMA)
-	ld hl, FixedOAMDMA         ; Load the source address of our routine into HL
-.copyOAMDMAloop
-	ld a, [hli]                ; Load a byte from the address HL points to into the register A, increment HL
-	ldh [c], a                 ; Load the byte in the A register to the address in HRAM with the low byte stored in C
-	inc c                      ; Increment the low byte of the HRAM pointer in C
-	dec b                      ; Decrement the loop counter in B
-	jr nz, .copyOAMDMAloop     ; If B isn't zero, continue looping
-
+	call CopyOAMDMA            ; Copy our OAM DMA routine
 	call Intro                 ; Call intro
 
 LoopForever:
@@ -75,7 +67,21 @@ LoopForever:
 	jr LoopForever
 
 
-SECTION "Flags", HRAM
+; Taken from Simple GB ASM Examples by Dave VanEe
+; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 
+SECTION "MemCopy", ROM0
+MemCopy::
+	ld a, [de]                 ; Load a byte from the address DE points to into the register A
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	inc de                     ; Increment the destination pointer in DE
+	dec bc                     ; Decrement the loop counter in BC
+	ld a, b                    ; Load the value in B into A
+	or c                       ; Logical OR the value in A (from B) with C
+	jr nz, MemCopy             ; If B and C are both zero, OR B will be zero, otherwise keep looping
+	ret
+
+
+SECTION "Flags", HRAM
 hFlags::
 	ds 1
