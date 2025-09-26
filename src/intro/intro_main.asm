@@ -35,7 +35,7 @@ ENDM
 
 MACRO INTRO_TOP_INIT
 DEF _ = (\1 - 1)
-IF \1 && T_INTRO_TOP_\1 != T_INTRO_TOP_{d:_} + 2
+IF \1 && T_INTRO_TOP_\1 != T_INTRO_TOP_{d:_} + 1
 	ld b, T_INTRO_TOP_\1       ; Load tile ID
 ENDC
 	ld e, X_INTRO_TOP_\1       ; Load X coordinate
