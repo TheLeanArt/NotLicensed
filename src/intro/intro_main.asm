@@ -14,6 +14,14 @@ MACRO INIT_VRAM_HL
 	ld hl, MAP_\1 + ROW_\1 * TILEMAP_WIDTH + COL_\1
 ENDM
 
+MACRO INTRO_DBL_INIT
+	INIT_VRAM_HL INTRO_\1      ; Load the double tile address into the HL register
+	ld a, T_INTRO_\1           ; Load left tile ID
+	ld [hli], a                ; Set left tile
+	inc a                      ; Increment tile ID
+	ld [hli], a                ; Set right tile
+ENDM
+
 MACRO INTRO_META_INIT
 	INIT_VRAM_HL INTRO_\1      ; Load the meta-tile address into the HL register
 	ld a, T_INTRO_\1           ; Load top left tile ID
@@ -31,7 +39,7 @@ IF \1 && T_INTRO_TOP_\1 != T_INTRO_TOP_{d:_} + 2
 	ld b, T_INTRO_TOP_\1       ; Load tile ID
 ENDC
 	ld e, X_INTRO_TOP_\1       ; Load X coordinate
-	call SetObject16           ; Set the object
+	call SetObject             ; Set the object
 ENDM
 
 MACRO INTRO_BOTTOM_INIT
@@ -39,11 +47,11 @@ MACRO INTRO_BOTTOM_INIT
 	ld e, X_INTRO_\1           ; Load X coordinate
 IF \1 == 5
 	; Fall through
-	ASSERT (@ == SetTwoObjects16)
+	ASSERT (@ == SetMetaObject)
 ELIF INTRO_\1_WIDTH == 1
-	call SetObject16           ; Set the object
+	call SetDoubleObject       ; Set the double-object
 ELSE
-	call SetTwoObjects16       ; Set the meta-object
+	call SetMetaObject         ; Set the meta-object
 ENDC
 ENDM
 
@@ -70,7 +78,7 @@ Intro::
 	INIT_VRAM_HL LOGO          ; Load the background logo address into the HL register
 	call ClearLogo             ; Clear the logo from the background
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-	INTRO_META_INIT BY         ; Draw BY on the background
+	INTRO_DBL_INIT BY          ; Draw BY on the background
 	
 	INIT_VRAM_HL LOGO2         ; Load the window logo address into the HL register
 	ld b, T_LOGO               ; Load the first tile index into the B register
@@ -136,7 +144,7 @@ ENDC
 	call hFixedOAMDMA          ; Perform our OAM DMA
 	ei                         ; Enable interrupts!
 
-	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_OBJ_16 | LCDC_WIN_ON | LCDC_WIN_9C00
+	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_WIN_ON | LCDC_WIN_9C00
 	ldh [rLCDC], a             ; Enable and configure the LCD
 
 	call SGB_TryUnfreeze       ; Unfreeze SGB display
@@ -404,14 +412,26 @@ IntroMain:
 	dec [hl]                   ; Decrement the Y coordinate
 	
 	ld l, OBJ_INTRO_0 * OBJ_SIZE
+
 .bottomLoop
-	inc d                      ; Advance to the next page
-	ld a, [de]                 ; Load the Y/tile ID value
-	ld [hli], a                ; Set Y/tile ID
+	inc d                      ; Advance to the Y/X page
+	inc d                      ; Advance to the ID/attrs page
+	push de                    ; Save the step counter
+	ld a, [de]                 ; Load the tile ID value
+	ld b, a                    ; Store the tile ID value in B
 	set 7, e                   ; Advance to the second half-page
-	ld a, [de]                 ; Load the X/attributes value
-	ld [hli], a                ; Set X/attributes
+	ld a, [de]                 ; Load the attributes value
+	ld c, a                    ; Store the attributes value in C
+	dec d                      ; Go back to the Y/X page
+	ld a, [de]                 ; Load the X value
+	ld h, a                    ; Store the X value in H
 	res 7, e                   ; Go back to the first half-page
+	ld a, [de]                 ; Load the Y value
+	ld d, a                    ; Store the Y value in D
+	ld e, h                    ; Load the X value in E
+	ld h, HIGH(wShadowOAM)     ; Load the upper address byte into H
+	call SetDoubleObject       ; Set the double-object
+	pop de                     ; Restore the step counter
 	ld a, l                    ; Load the value in L into A
 	cp OBJ_INTRO_END * OBJ_SIZE; End object reached?
 	jr nz, .bottomLoop         ; If not, continue to loop
@@ -467,7 +487,8 @@ InitTop:
 	ld hl, wShadowOAM + OBJ_INTRO_NOT * OBJ_SIZE
 	ld bc, T_INTRO_NOT << 8    ; Load tile ID and attributes
 	ld de, Y_INTRO_INIT << 8 | X_INTRO_NOT
-	call SetTwoObjects16       ; Set the meta-object
+	call SetObject             ; Set the first object
+	call SetObject             ; Set the second object
 
 FOR I, 8
 	INTRO_TOP_INIT {d:I}
@@ -481,45 +502,57 @@ ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
 	ldh a, [hFlags]            ; Load our flags into the A register
 	and FLAGS_DMG0             ; Isolate the DMG0 flag
 	ld c, a                    ; Load attributes
-	jr SetObject16             ; Set the object and return
-
-InitBottom:
-	ld hl, wShadowOAM + OBJ_INTRO_0 * OBJ_SIZE
-	ld bc, T_INTRO_0 << 8      ; Load tile ID and attributes
-	ld de, Y_INTRO_BOTTOM << 8 | X_INTRO_0
-	call SetTwoObjects16       ; Set the meta-object
-
-FOR I, 1, 6
-	INTRO_BOTTOM_INIT {d:I}
-ENDR
-
-SetTwoObjects16:
-	call SetObject16           ; Set the first object
 	; Fall through
 
-SetObject16::
-	ld a, d                    ; Load the X coordinate from D
+SetObject::
+	ld a, d                    ; Load the Y coordinate from D
+.cont1
 	ld [hli], a                ; Set the Y coordinate
 	ld a, e                    ; Load the X coordinate from E
 	ld [hli], a                ; Set the X coordinate
 	add TILE_WIDTH             ; Advance the X coordinate
 	ld e, a                    ; Store the updated X coordinate
+.cont2
 	ld a, b                    ; Load the tile ID from B
 	ld [hli], a                ; Set the tile ID
 	inc b                      ; Advance the tile ID
-	inc b                      ; ...
 	ld a, c                    ; Load the attributes from C
 	ld [hli], a                ; Set the attributes
 	ret
 
+InitBottom:
+	ld hl, wShadowOAM + OBJ_INTRO_0 * OBJ_SIZE
+	ld bc, T_INTRO_0 << 8      ; Load tile ID and attributes
+	ld de, Y_INTRO_BOTTOM << 8 | X_INTRO_0
+	call SetMetaObject         ; Set the meta-object
+
+FOR I, 1, 6
+	INTRO_BOTTOM_INIT {d:I}
+ENDR
+
+SetMetaObject:
+	call SetDoubleObject       ; Set the first double-object
+	; Fall through
+
+SetDoubleObject:
+	ld a, d                    ; Load the Y coordinate from D
+	ld [hli], a                ; Set the Y coordinate
+	ld a, e                    ; Load the X coordinate from E
+	ld [hli], a                ; Set the X coordinate
+	call SetObject.cont2       ; Proceed to set the tile ID + attributes
+
+	ld a, d                    ; Load the Y coordinate from D
+	add TILE_HEIGHT            ; Advance the Y coordinate
+	jr SetObject.cont1         ; Proceed to set object
+
 Color8:
 
 IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
-	push de
-	ld hl, STARTOF(VRAM) | (T_INTRO_BY - 2) << 4
-	ld de, ByTiles
-	call CopyTopDouble
-	pop de
+	INIT_VRAM_HL INTRO_BY      ; Load the meta-tile address into the HL register
+	ld a, T_INTRO_BY_2         ; Load left tile ID
+	ld [hli], a                ; Set left tile
+	inc a                      ; Increment tile ID
+	ld [hli], a                ; Set right tile
 ENDC
 
 IF DEF(COLOR8)
@@ -529,7 +562,7 @@ IF I == 0
 ELSE
 	ld l, I * OBJ_SIZE + OAMA_TILEID
 ENDC
-	ld a, T_INTRO_NOT_2 + I * 2
+	ld a, T_INTRO_NOT_2 + I
 	ld [hli], a
 ENDR
 	xor a

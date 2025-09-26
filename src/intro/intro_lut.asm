@@ -42,7 +42,7 @@ FOR T, 0, 96
 IF (T & 4) == 0
 	db T_INTRO_0 + ((T & 3) << 2) + I * 2
 ELSE
-	db T_INTRO_0 + ((T & 3) << 2) + 3 - I * 2
+	db T_INTRO_0 + ((T & 3) << 2) + 2 - I * 2
 ENDC
 ENDR
 	ds 32, 0
@@ -97,13 +97,10 @@ FOR T, 0, 64
 ENDR
 	ds 64, 0
 
+
 .tile\@
 FOR T, 0, 64
-IF (T >> 1) & 4 == 0
-	db T_INTRO_2 + (((T >> 1) & 3) << 2) + I * 2
-ELSE
-	db T_INTRO_2 + (((T >> 1) & 3) << 2) + 3 - I * 2
-ENDC
+	db T_INTRO_2 + (((T >> 2) & 7) << 2) + I * 2
 ENDR
 	ds 64, 0
 
@@ -162,7 +159,7 @@ FOR T, 0, 128
 IF (T >> 1) & 4 == 0
 	db T_INTRO_4 + (((T >> 1) & 3) << 2) + I * 2
 ELSE
-	db T_INTRO_4 + (((T >> 1) & 3) << 2) + 3 - I * 2
+	db T_INTRO_4 + (((T >> 1) & 3) << 2) + 2 - I * 2
 ENDC
 ENDR
 
@@ -199,7 +196,7 @@ FOR T, 0, 128
 IF (T & 4) == 0
 	db T_INTRO_5 + ((T & 3) << 2) + I * 2
 ELSE
-	db T_INTRO_5 + ((T & 3) << 2) + 3 - I * 2
+	db T_INTRO_5 + ((T & 3) << 2) + 2 - I * 2
 ENDC
 ENDR
 

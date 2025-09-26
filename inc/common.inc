@@ -55,10 +55,18 @@ ENDR
 ENDM
 
 ; @param \1 Tiles prefix
-MACRO COPY_1BPP_TOP_PRE_SAFE
+MACRO COPY_1BPP_PRE_SAFE
 ASSERT(!HIGH(\1Tiles.end - \1Tiles))
-	ld c, (\1Tiles.end - \1Tiles) >> 3 ; Set C to the tile count
-	call CopyTopPreSafe
+	ld b, \1Tiles.end - \1Tiles
+.loop\@
+	rst WaitVRAM        ; Wait for VRAM to become accessible
+	ld a, [de]          ; Load a byte from the address DE points to into the A register
+	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
+	xor a               ; Clear the A register
+	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
+	inc de              ; Increment the source pointer in DE
+	dec b               ; Decrement the inner loop counter
+	jr nz, .loop\@      ; Stop if B is zero, otherwise keep looping
 ENDM
 
 ; @param \1 Page-aligned Tiles prefix
@@ -73,6 +81,13 @@ ASSERT(HIGH(\1Tiles.end - \1Tiles))
 	jr nz, .loop\@      ; Stop if B is zero, otherwise keep looping
 	dec c               ; Decrement the outer loop counter
 	jr nz, .loop\@      ; Stop if C is zero, otherwise keep looping
+ENDM
+
+; @param \1 Label
+MACRO MEM_COPY
+	ld bc, \1.end - \1  ; Set BC to the byte count
+	ld de, \1           ; Load the source address into DE
+	call MemCopy        ; Call the copy subroutine
 ENDM
 
 ; @param \1 First color

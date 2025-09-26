@@ -13,11 +13,16 @@ IntroDropLUT::
 
 .objY
 FOR T, 0, 64
-	db (T * T) / 64 - 4
+	db (T * T) / 64 + 4
 ENDR
-	db 64, 63, 62, 62, 63, 64
+	db Y_INTRO_FINAL + 0
+	db Y_INTRO_FINAL - 1
+	db Y_INTRO_FINAL - 2
+	db Y_INTRO_FINAL - 2
+	db Y_INTRO_FINAL - 1
+	db Y_INTRO_FINAL + 0
 
-	ds 256 - LOW(@ - IntroDropLUT), 64
+	ds 256 - LOW(@ - IntroDropLUT), Y_INTRO_FINAL
 
 .SCY
 
@@ -51,7 +56,7 @@ ENDR
 	db Y_INTRO_REG + 1
 	db Y_INTRO_REG + 0
 
-FOR T, 0, 64
+FOR T, 0, 63
 	db Y_INTRO_REG + T / 2 + (T * T) / 27
 ENDR
 
@@ -74,7 +79,7 @@ ENDR
 	ds 64, T_INTRO_REG
 
 FOR T, 64, 256
-	db T_INTRO_REG + (T & 3) * 2
+	db T_INTRO_REG + (T & 3)
 ENDR
 
 .regAttrs:

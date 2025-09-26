@@ -74,7 +74,21 @@ LoopForever:
 	jr LoopForever
 
 
-SECTION "Flags", HRAM
+; Taken from Simple GB ASM Examples by Dave VanEe
+; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 
+SECTION "MemCopy", ROM0
+MemCopy::
+	ld a, [de]                 ; Load a byte from the address DE points to into the register A
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	inc de                     ; Increment the destination pointer in DE
+	dec bc                     ; Decrement the loop counter in BC
+	ld a, b                    ; Load the value in B into A
+	or c                       ; Logical OR the value in A (from B) with C
+	jr nz, MemCopy             ; If B and C are both zero, OR B will be zero, otherwise keep looping
+	ret
+
+
+SECTION "Flags", HRAM
 hFlags::
 	ds 1
