@@ -500,7 +500,9 @@ ENDR
 	; Fall through
 
 InitReg:
+IF T_INTRO_REG != T_INTRO_TOP_7
 	ld b, T_INTRO_REG          ; Load tile ID
+ENDC
 	                           ; Compensate for width adjustment
 	ld de, Y_INTRO_REG << 8 | (X_INTRO_REG + 2)
 ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)

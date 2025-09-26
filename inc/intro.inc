@@ -75,8 +75,7 @@ DEF X_INTRO_5            EQU 122
 
 DEF T_LOGO               EQU $01
 DEF T_REG                EQU $19
-DEF T_INTRO_REG          EQU $20
-DEF T_INTRO_NOT          EQU T_INTRO_REG       +  4
+DEF T_INTRO_NOT          EQU $20
 
 IF DEF(COLOR8)
 	DEF T_INTRO_NOT_2    EQU T_REG             +  2
@@ -103,7 +102,8 @@ ELSE
 ENDC
 DEF T_INTRO_TOP_6        EQU T_INTRO_TOP_4     +  2
 DEF T_INTRO_TOP_7        EQU T_INTRO_TOP_6     +  1
-DEF T_INTRO_BY           EQU T_INTRO_TOP_7     +  1
+DEF T_INTRO_REG          EQU T_INTRO_TOP_7     +  1
+DEF T_INTRO_BY           EQU T_INTRO_REG       +  4
 
 IF DEF(COLOR8)
 	DEF T_INTRO_BY_2     EQU T_INTRO_TOP_0_2   +  1
