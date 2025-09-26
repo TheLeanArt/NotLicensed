@@ -11,19 +11,6 @@ SECTION "Intro Drop LUT", ROM0, ALIGN[8]
 
 IntroDropLUT::
 
-.objY
-FOR T, 0, 64
-	db (T * T) / 64 + 4
-ENDR
-	db Y_INTRO_FINAL + 0
-	db Y_INTRO_FINAL - 1
-	db Y_INTRO_FINAL - 2
-	db Y_INTRO_FINAL - 2
-	db Y_INTRO_FINAL - 1
-	db Y_INTRO_FINAL + 0
-
-	ds 256 - LOW(@ - IntroDropLUT), Y_INTRO_FINAL
-
 .SCY
 
 FOR T, 0, 64
@@ -31,7 +18,7 @@ FOR T, 0, 64
 ENDR
 	db 0, 1, 2, 2, 1, 0
 
-	ds 256 - LOW(@ - .SCY), 0
+	ds 128 - LOW(@ - .SCY), 0
 
 .WY
 
@@ -40,7 +27,7 @@ FOR T, 0, 64
 ENDR
 	db 64, 65, 67, 68, 68, 67, 65, 64
 
-	ds 256 - LOW(@ - .WY), 64
+	ds 256 - LOW(@ - .SCY), 64
 
 .regY
 
@@ -56,11 +43,11 @@ ENDR
 	db Y_INTRO_REG + 1
 	db Y_INTRO_REG + 0
 
-FOR T, 0, 63
+FOR T, 0, 128 - 72
 	db Y_INTRO_REG + T / 2 + (T * T) / 27
 ENDR
 
-	ds 256 - LOW(@ - .regY), Y_INTRO_INIT
+ASSERT (LOW(@) == 128)
 
 .regX
 
@@ -72,22 +59,6 @@ FOR T, 0, 64
 	db X_INTRO_REG + T / 2
 ENDR
 
-	ds 256 - LOW(@ - .regX), 0
-
-.regTile:
-
-	ds 64, T_INTRO_REG
-
-FOR T, 64, 256
-	db T_INTRO_REG + (T & 3)
-ENDR
-
-.regAttrs:
-
-	ds 64, 0
-
-FOR T, 64, 256
-	db ((T & 4) >> 2) * (OAM_XFLIP | OAM_YFLIP)
-ENDR
+	ds 256 - LOW(@ - .regY), 0
 
 ASSERT (LOW(@) == 0)

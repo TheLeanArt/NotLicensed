@@ -160,25 +160,8 @@ ENDC
 
 	ldh a, [hFlags]            ; Load our flags into the A register
 	ld c, a                    ; Store the flags in the C register
-	bit B_FLAGS_SGB, a         ; Are we running on SGB?
-	jr z, .drop                ; If not, skip SGB init
-
-IF DEF(FADEOUT)
-	ld hl, wPacketBuffer       ; Load packet buffer address into HL
-	ld a, SGB_PAL01 | $01      ; Load command type and packet count
-	ld [hli], a                ; Set header and advance
-	xor a                      ; Set A to zero
-.clearLoop
-	ld [hli], a                ; Set and advance
-	bit 4, l                   ; Buffer length reached?
-	jr z, .clearLoop           ; If not, continue to loop
-ENDC
-
-	ld b, INTRO_SGB_DELAY      ; ~1 sec delay to make up for the SGB bootup animation
-.waitLoop
-	rst WaitVBlank             ; Wait for the next VBlank
-	dec b                      ; Decrement the counter
-	jr nz, .waitLoop           ; Continue to loop unless zero
+	and FLAGS_SGB              ; Are we running on SGB?
+	call nz, IntroInitSGB      ; If yes, initialize SGB
 
 .drop
 	ld e, 0                    ; Use E as our step counter
@@ -186,7 +169,10 @@ ENDC
 	rst WaitVBlank             ; Wait for the next VBlank
 	ld hl, wShadowOAM          ; Start from the top
 	ld d, HIGH(IntroDropLUT)   ; Set the upper address byte to the start of our LUT
-	ld a, [de]                 ; Load the Y coordinate value
+	ld a, [de]                 ; Load the background's Y value
+	ldh [rSCY], a              ; Set the Y coordinate
+	cpl                        ; Complement A
+	add Y_INTRO_FINAL + 1      ; Adjust the Y coordinate
 	ld b, a                    ; Store the Y coordinate in B
 
 .objLoop
@@ -194,43 +180,59 @@ ENDC
 	ld a, l                    ; Advance to the next object
 	add OBJ_SIZE               ; ...
 	ld l, a                    ; ...
-	cp OBJ_INTRO_TOP_END * OBJ_SIZE ; Bottom object reached?
+	cp OBJ_INTRO_REG * OBJ_SIZE; ® object reached?
 	jr nz, .objLoop            ; If not, continue to loop
 
-	inc d                      ; Advance to the background LUT
-	ld a, [de]                 ; Load the background's Y value
-	ldh [rSCY], a              ; Set the Y coordinate
-
-	inc d                      ; Advance to the window LUT
+	set 7, e                   ; Advance to the second half-page
 	ld a, [de]                 ; Load the window's Y value
 	ldh [rWY], a               ; Set the Y coordinate
+	res 7, e                   ; Go back to the first half-page
 
 	bit B_FLAGS_DMG0, c        ; Are we running on DMG0?
-	jr nz, .regDone            ; If yes, skip the ® object
+	jr nz, .dropDone           ; If yes, skip the ® object
 
-REPT 4
 	inc d                      ; Advance to the next page
-	ld a, [de]                 ; Load Y/X/tile ID/attributes value
-	ld [hli], a                ; Set the value
-ENDR
+	ld a, [de]                 ; Load the Y coordinate value
+	ld [hli], a                ; Set the Y coordinate
+	set 7, e                   ; Advance to the second half-page
+	ld a, [de]                 ; Load the X coordinate value
+	ld [hli], a                ; Set the X coordinate
+	res 7, e                   ; Go back to the first half-page
+
+	ld a, e                    ; Load the value in E into A
+	sub 64                     ; Step 64 reached?
+	jr c, .regDone             ; If not, skip setting tile ID and attributes
+	jr z, .regDone             ; If just, skip setting tile ID and attributes
+	and 3                      ; Isolate rotation step
+	jr nz, .regTile            ; If nonzero, skip setting attributes
+.regAttrs
+	inc l                      ; Advance to attributes
+	ld a, OAM_XFLIP | OAM_YFLIP; Rotate 180 degrees
+	xor [hl]                   ; Apply to the current attributes
+	ld [hld], a                ; Set the new attributes
+.regTile
+	inc [hl]                   ; Increment the tile ID
+	res 2, [hl]                ; Isolate rotation step
+.regDone
+
 
 IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM || DEF(COLOR8)
 
 	bit B_FLAGS_GBC, c         ; Are we running on GBC?
-	jr z, .regDone             ; If not, proceed to prevent lag
+	jr z, .dropDone            ; If not, proceed to prevent lag
 	ld a, e                    ; Load the value in E into A
 	cp COLOR8_STEP             ; Coloration step reached?
 	call z, Color8             ; If yes, colorate
-	jr .regDone
 
 ENDC
 
-.regDone
+.dropDone
 	call hFixedOAMDMA          ; Prevent lag
 	inc e                      ; Increment the step counter
-	jr nz, .dropLoop           ; Continue to loop unless 256 reached
+	bit 7, e                   ; Step 128 reached?
+	jr z, .dropLoop            ; If not, continue to loop
 
-	rst WaitVBlank             ; Wait for the next VBlank
+	call Sleep                 ; Wait 128 frames
 	INIT_VRAM_HL LOGO2         ; Load the window logo address into the HL register
 	call ClearLogo             ; Remove the logo from the window
 	INTRO_META_INIT E          ; Draw E on the background
@@ -689,6 +691,31 @@ REPT 6
 	dw C_INTRO_BOTTOM_SGB
 ENDR
 	db 0
+
+
+SECTION "IntroInitSGB", ROM0
+IntroInitSGB:
+
+IF DEF(FADEOUT)
+
+	ASSERT(SGB_PAL01 == 0 && FLAGS_SGB == 1)
+
+	ld hl, wPacketBuffer       ; Load packet buffer address into HL
+	ld [hli], a                ; Set header and advance
+	xor a                      ; Set A to zero
+.clearLoop
+	ld [hli], a                ; Set and advance
+	bit 4, l                   ; Buffer length reached?
+	jr z, .clearLoop           ; If not, continue to loop
+
+ENDC
+
+	ld e, INTRO_SGB_DELAY      ; ~1 sec delay to make up for the SGB bootup animation
+Sleep:
+	rst WaitVBlank             ; Wait for the next VBlank
+	dec e                      ; Decrement the counter
+	jr nz, Sleep               ; Continue to loop unless zero
+	ret
 
 
 IF DEF(FADEOUT)
