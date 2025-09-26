@@ -7,7 +7,7 @@ include "defs.inc"
 include "intro.inc"
 
 
-SECTION "Intro LUT", ROM0, ALIGN[8]
+SECTION "Intro LUT", ROMX, ALIGN[8]
 
 IntroLUT::
 
