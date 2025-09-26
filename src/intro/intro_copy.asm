@@ -19,7 +19,7 @@ IF DEF(COLOR8)
 	MEM_COPY TopTiles2
 ELSE
 	ld de, TopTiles
-	ld hl, STARTOF(VRAM) | T_INTRO_NOT << 4
+	ld hl, STARTOF(VRAM) | T_INTRO_REG << 4
 ENDC
 	COPY_1BPP_PRE_SAFE Top     ; Copy ® + top tiles
 	COPY_0_5BPP_PRE_SAFE Intro2; Copy 0.5bpp tiles
@@ -34,9 +34,9 @@ TopTiles2:
 .end
 
 TopTiles:
+	INCBIN "intro_reg.1bpp"
 	INCBIN "intro_not.1bpp"
 	INCBIN "intro_top.1bpp"
-	INCBIN "intro_reg.1bpp"
 	INCBIN "intro_by.1bpp"
 .end
 
