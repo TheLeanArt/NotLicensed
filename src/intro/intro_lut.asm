@@ -219,7 +219,7 @@ ENDR
 
 SCX_LUT:
 FOR T, 0, 128
-	db -T
+	db -T * 9 / 8
 ENDR
 
 ASSERT (LOW(@) == 0)
