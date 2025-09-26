@@ -85,3 +85,14 @@ MACRO INTER_COLOR
 	DEF _B = ((((\1 >> 10) & $1F) * (\3 - \4) + ((\2 >> 10) & $1F) * (\4 + 1)) / \3)
 	dw {d:_B} << 10 | {d:_G} << 5 | {d:_R}
 ENDM
+
+; @param \1 Top
+; @param \2 Bottom
+MACRO GRADIENT_LUT
+FOR I, GRADIENT_LENGTH
+	INTER_COLOR \1, \2, GRADIENT_LENGTH, I
+ENDR
+REPT GRADIENT_PADDING
+	dw \2
+ENDR
+ENDM

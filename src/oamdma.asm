@@ -57,7 +57,7 @@ STAT:
 	ld a, b
 	and $FE
 	ld c, a
-	ld b, HIGH(ColorLUT)
+	ld b, HIGH(wColorLUT)
 	ld a, [bc]
 	ldh [hColorLow], a
 	inc c
@@ -81,14 +81,37 @@ ENDC
 
 IF DEF(GRADIENT)
 
-SECTION "ColorLUT", ROM0, ALIGN[8]
-ColorLUT:
-FOR I, GRADIENT_LENGTH
-	INTER_COLOR C_GRADIENT_TOP, C_GRADIENT_BOTTOM, GRADIENT_LENGTH, I
-ENDR
-REPT GRADIENT_PADDING
-	dw C_GRADIENT_BOTTOM
-ENDR
+SECTION "ColorLUT", WRAM0, ALIGN[8]
+wColorLUT:
+	ds SCREEN_HEIGHT_PX
+.end
+
+
+SECTION "InitColorLUT", ROM0
+InitColorLUT::
+	ld c, (wColorLUT.end - wColorLUT) >> 1
+	ld hl, wColorLUT           ; Load the destination address into HL
+.loop
+	ld [hl], e                 ; Load the lower color byte to the address HL points to
+	inc l                      ; Increment the L register
+	ld [hl], d                 ; Load the upper color byte to the address HL points to
+	inc l                      ; Increment the L register
+	dec c                      ; Decrement the loop counter in C
+	jr nz, .loop               ; If C isn't zero, continue looping
+	ret
+
+
+SECTION "CopyColorLUT", ROM0
+CopyColorLUT::
+	ld c, wColorLUT.end - wColorLUT
+	ld hl, wColorLUT           ; Load the destination address into HL
+.loop
+	ld a, [de]                 ; Load a byte from the address DE points to into the register A
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	inc de                     ; Increment the source pointer in DE
+	dec c                      ; Decrement the loop counter in C
+	jr nz, .loop               ; If C isn't zero, continue looping
+	ret
 
 ENDC
 
