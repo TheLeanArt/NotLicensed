@@ -320,6 +320,25 @@ IntroMain:
 	sub c                      ; Subtract t/8
 	ld b, a                    ; Store t * 3/8 in B
 
+	ld hl, rSCX                ; Start from the background's X coordinate
+	ld a, e                    ; Load t into A
+	add c                      ; Add t/8
+	cpl                        ; Complement A
+	inc a                      ; Negate A
+	ld [hld], a                ; Set the background's X coordinate and move to Y
+	ld [hl], e                 ; Set the background's Y coordinate
+
+	ld l, LOW(rWY)             ; Start from the window's Y coordinate
+	ld a, e                    ; Load t into A
+	cp Y_INTRO_N2              ; Threshold reached?
+	jr nc, .cont               ; If yes, skip
+	add a                      ; Multiply by 2
+	add Y_INTRO_N2             ; Add initial Y coordinate
+	ld [hli], a                ; Set the windows's Y coordinate and move to X
+	add X_INTRO_N2 - Y_INTRO_N2; Add initial X coordinate
+	ld [hl], a                 ; Set the window's X coordinate
+.cont
+
 	ld a, X_INTRO_NOT          ; Load x_0 into A
 	sub e                      ; Subtract t
 	sub c                      ; Subtract t / 8
@@ -386,17 +405,6 @@ IntroMain:
 	
 	ld l, OBJ_INTRO_0 * OBJ_SIZE
 .bottomLoop
-	call CopyPair              ; Copy page
-	ld a, l                    ; Load the value in L into A
-	cp OBJ_INTRO_END * OBJ_SIZE; End object reached?
-	jr nz, .bottomLoop         ; If not, continue to loop
-
-	ld hl, rSCY                ; Start from the background's Y coordinate
-	call CopyPair              ; Update the background's coordinates
-	ld l, LOW(rWY)             ; Proceed to the window's Y coordinate
-	; Fall through
-
-CopyPair:
 	inc d                      ; Advance to the next page
 	ld a, [de]                 ; Load the Y/tile ID value
 	ld [hli], a                ; Set Y/tile ID
@@ -404,6 +412,9 @@ CopyPair:
 	ld a, [de]                 ; Load the X/attributes value
 	ld [hli], a                ; Set X/attributes
 	res 7, e                   ; Go back to the first half-page
+	ld a, l                    ; Load the value in L into A
+	cp OBJ_INTRO_END * OBJ_SIZE; End object reached?
+	jr nz, .bottomLoop         ; If not, continue to loop
 	ret
 
 SetOddballMetaTile:

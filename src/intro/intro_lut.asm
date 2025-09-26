@@ -26,7 +26,7 @@ N0_LUT:
 FOR I, 0, 2
 
 .y\@
-FOR T, 0, 96
+FOR T, 1, 97
 	db LOW(Y_INTRO_BOTTOM - T * 4)
 ENDR
 	ds 32, 0
@@ -62,7 +62,7 @@ ENDR
 
 I_LUT:
 .y
-FOR T, 0, 128
+FOR T, 1, 129
 	db LOW(Y_INTRO_BOTTOM + T * 3)
 ENDR
 
@@ -86,7 +86,7 @@ N1_LUT:
 FOR I, 0, 2
 
 .y\@
-FOR T, 0, 64
+FOR T, 1, 65
 	db Y_INTRO_BOTTOM - T * 2
 ENDR
 	ds 64, 0
@@ -124,7 +124,7 @@ ASSERT (LOW(@) == 0)
 T_LUT:
 
 .y
-FOR T, 0, 128
+FOR T, 1, 129
 	db Y_INTRO_BOTTOM + T
 ENDR
 
@@ -141,12 +141,14 @@ ENDR
 .attrs
 	ds 128, 0
 
+ASSERT (LOW(@) == 0)
+
 D_LUT:
 
 FOR I, 0, 2
 
 .y\@
-FOR T, 0, 128
+FOR T, 1, 129
 	db LOW(Y_INTRO_BOTTOM - T * 3)
 ENDR
 
@@ -175,12 +177,14 @@ ENDR
 
 ENDR
 
+ASSERT (LOW(@) == 0)
+
 O_LUT:
 
 FOR I, 0, 2
 
 .y\@
-FOR T, 0, 96
+FOR T, 1, 97
 	db LOW(Y_INTRO_BOTTOM + T * 4)
 ENDR
 	ds 32, 0
@@ -210,27 +214,4 @@ ENDR
 
 ASSERT (LOW(@) == 0)
 
-ENDR
-
-SCY_LUT:
-FOR T, 0, 128
-	db T
-ENDR
-
-SCX_LUT:
-FOR T, 0, 128
-	db -T * 9 / 8
-ENDR
-
-ASSERT (LOW(@) == 0)
-
-WY_LUT:
-FOR T, 0, 64
-	db LOW(64 + T * 2)
-ENDR
-	ds 64, -1
-
-WX_LUT:
-FOR T, 0, 128
-	db LOW(X_INTRO_N2 + T * 2)
 ENDR

@@ -41,6 +41,7 @@ DEF MAP_INTRO_N2         EQU TILEMAP1
 DEF ROW_INTRO_N2         EQU   0
 DEF COL_INTRO_N2         EQU   0
 
+DEF Y_INTRO_N2           EQU  64
 DEF X_INTRO_N2           EQU  86 + WX_OFS
 
 DEF Y_INTRO_REG          EQU  76
