@@ -7,16 +7,7 @@ include "defs.inc"
 include "intro.inc"
 
 
-MACRO TOP_LUT
-
-FOR T, 0, 64
-	db X_INTRO_TOP_\1 + (\2 * T) / 8
-ENDR
-	ds 64, 0
-
-ENDM
-
-SECTION "Intro LUT", ROMX, ALIGN[8]
+SECTION "Intro LUT", ROM0, ALIGN[8]
 
 IntroLUT::
 
@@ -29,26 +20,6 @@ N2_LUT:
 FOR T, 0, 128
 	db T_INTRO_N2 + ((T >> 2) & 7) << 2
 ENDR
-
-ASSERT (LOW(@) == 0)
-
-FOR I, 0, 2
-
-FOR T, 0, 64
-	db X_INTRO_TOP - T + I * 8
-ENDR
-	ds 64, 0
-
-ENDR
-
-	TOP_LUT 0, -7
-	TOP_LUT 1, -5
-	TOP_LUT 2, -3
-	TOP_LUT 3, -1
-	TOP_LUT 4,  1
-	TOP_LUT 5,  3
-	TOP_LUT 6,  5
-	TOP_LUT 7,  7
 
 N0_LUT:
 

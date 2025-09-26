@@ -312,28 +312,77 @@ ENDC
 
 SECTION "Intro Subroutines", ROM0
 IntroMain:
+	ld a, e                    ; Load t into A
+	srl a                      ; Divide by 2
+	ld c, a                    ; Store t/2 in C
+	srl c                      ; Divide by 2
+	srl c                      ; Divide by 2
+	sub c                      ; Subtract t/8
+	ld b, a                    ; Store t * 3/8 in B
+
 	ld hl, wShadowOAM          ; Start from the top
-
-.topLoop
-	inc d                      ; Advance to the next page
 	dec [hl]                   ; Decrement the Y coordinate
-	inc l                      ; Advance to the X coordinate
-	ld a, [de]                 ; Load the X coordinate value
-	ld [hli], a                ; Set the X coordinate
-	set 7, e                   ; Advance to the second half-page
-	inc l                      ; Skip tile ID
-	inc l                      ; Skip attributes
-	dec [hl]                   ; Decrement the Y coordinate
-	inc l                      ; Advance to the X coordinate
-	ld a, [de]                 ; Load the X coordinate value
-	ld [hli], a                ; Set the X coordinate
-	res 7, e                   ; Go back to the first half-page
-	inc l                      ; Skip tile ID
-	inc l                      ; Skip attributes
-	ld a, l                    ; Load the value in L into A
-	cp OBJ_INTRO_TOP_END * OBJ_SIZE ; Bottom object reached?
-	jr nz, .topLoop            ; If not, continue to loop
+	inc l                      ; Move to the X coordinate
+	dec [hl]                   ; Decrement the X coordinate
 
+	ld l, (OBJ_INTRO_NOT + 1) * OBJ_SIZE
+	dec [hl]                   ; Decrement the Y coordinate
+	inc l                      ; Move to the X coordinate
+	dec [hl]                   ; Decrement the X coordinate
+
+	ld a, X_INTRO_TOP_3        ; Load x_4 into A
+	sub c                      ; Subtract t/8
+	ld l, OBJ_INTRO_TOP_3 * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_4 - t * 1/8 and move to the Y coordinate
+	dec [hl]                   ; Decrement the Y coordinate
+
+	ld a, X_INTRO_TOP_4        ; Load x_5 into A
+	add c                      ; Add t/8
+	ld l, OBJ_INTRO_TOP_4 * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_5 + t * 1/8 and move to the Y coordinate
+	dec [hl]                   ; Decrement the Y coordinate
+
+	ld a, X_INTRO_TOP_5        ; Load x_5 into A
+	add b                      ; Add t * 3/8
+	ld l, OBJ_INTRO_TOP_5 * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_5 + t * 3/8 and move to the Y coordinate
+	dec [hl]                   ; Decrement the Y coordinate
+
+	ld a, X_INTRO_TOP_2        ; Load x_3 into A
+	sub b                      ; Subtract t * 3/8
+	ld l, OBJ_INTRO_TOP_2 * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_3 - t * 3/8 and move to the Y coordinate
+	dec [hl]                   ; Decrement the Y coordinate
+
+	ld a, e                    ; Load t into A
+	sub b                      ; Subtract t * 3/8
+	ld b, a                    ; Store t * 5/8 in B
+	add X_INTRO_TOP_6          ; Add x_7
+	ld l, OBJ_INTRO_TOP_6 * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_7 + t * 5/8 and move to the Y coordinate
+	dec [hl]                   ; Decrement the Y coordinate
+	
+	ld a, X_INTRO_TOP_1        ; Load x_2 into A
+	sub b                      ; Subtract t * 5/8
+	ld l, OBJ_INTRO_TOP_1 * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_2 - t * 5/8 and move to the Y coordinate
+	dec [hl]                   ; Decrement the Y coordinate
+
+	ld a, e                    ; Load t into A
+	sub c                      ; Subtract t/8
+	ld c, a                    ; Store t * 7/8 in C
+	add X_INTRO_TOP_7          ; Add x_8
+	ld l, OBJ_INTRO_TOP_7 * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_8 + t * 7/8 and move to the Y coordinate
+	dec [hl]                   ; Decrement the Y coordinate
+	
+	ld a, X_INTRO_TOP_0        ; Load x_1 into A
+	sub c                      ; Subtract t * 7/8
+	ld l, OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_1 - t * 7/8 and move to the Y coordinate
+	dec [hl]                   ; Decrement the Y coordinate
+	
+	ld l, OBJ_INTRO_0 * OBJ_SIZE
 .bottomLoop
 	call CopyPair              ; Copy page
 	ld a, l                    ; Load the value in L into A
@@ -404,7 +453,7 @@ SetLogo:
 InitTop:
 	ld hl, wShadowOAM + OBJ_INTRO_NOT * OBJ_SIZE
 	ld bc, T_INTRO_NOT << 8    ; Load tile ID and attributes
-	ld de, Y_INTRO_INIT << 8 | X_INTRO_TOP
+	ld de, Y_INTRO_INIT << 8 | X_INTRO_NOT
 	call SetTwoObjects16       ; Set the meta-object
 
 FOR I, 8
