@@ -365,6 +365,26 @@ IntroMain:
 	ld [hld], a                ; Store x_0 - t * 9/8 + 8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
 
+	ld a, X_INTRO_TOP_0        ; Load x_1 into A
+	sub e                      ; Subtract t
+	add c                      ; Add t * 7/8
+	ld l, OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_1 - t * 7/8 and move to the Y coordinate
+	dec [hl]                   ; Decrement the Y coordinate
+
+	ld a, X_INTRO_TOP_1        ; Load x_2 into A
+	sub e                      ; Subtract e
+	add b                      ; Subtract t * 3/8
+	ld l, OBJ_INTRO_TOP_1 * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_2 - t * 5/8 and move to the Y coordinate
+	dec [hl]                   ; Decrement the Y coordinate
+
+	ld a, X_INTRO_TOP_2        ; Load x_3 into A
+	sub b                      ; Subtract t * 3/8
+	ld l, OBJ_INTRO_TOP_2 * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_3 - t * 3/8 and move to the Y coordinate
+	dec [hl]                   ; Decrement the Y coordinate
+
 	ld a, X_INTRO_TOP_3        ; Load x_4 into A
 	sub c                      ; Subtract t/8
 	ld l, OBJ_INTRO_TOP_3 * OBJ_SIZE + OAMA_X
@@ -383,38 +403,18 @@ IntroMain:
 	ld [hld], a                ; Store x_5 + t * 3/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
 
-	ld a, X_INTRO_TOP_2        ; Load x_3 into A
+	ld a, X_INTRO_TOP_6        ; Load x_7 into A
+	add e                      ; Add t
 	sub b                      ; Subtract t * 3/8
-	ld l, OBJ_INTRO_TOP_2 * OBJ_SIZE + OAMA_X
-	ld [hld], a                ; Store x_3 - t * 3/8 and move to the Y coordinate
-	dec [hl]                   ; Decrement the Y coordinate
-
-	ld a, e                    ; Load t into A
-	sub b                      ; Subtract t * 3/8
-	ld b, a                    ; Store t * 5/8 in B
-	add X_INTRO_TOP_6          ; Add x_7
 	ld l, OBJ_INTRO_TOP_6 * OBJ_SIZE + OAMA_X
 	ld [hld], a                ; Store x_7 + t * 5/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
-	
-	ld a, X_INTRO_TOP_1        ; Load x_2 into A
-	sub b                      ; Subtract t * 5/8
-	ld l, OBJ_INTRO_TOP_1 * OBJ_SIZE + OAMA_X
-	ld [hld], a                ; Store x_2 - t * 5/8 and move to the Y coordinate
-	dec [hl]                   ; Decrement the Y coordinate
 
-	ld a, e                    ; Load t into A
+	ld a, X_INTRO_TOP_7        ; Load x_8 into A
+	add e                      ; Add t
 	sub c                      ; Subtract t/8
-	ld c, a                    ; Store t * 7/8 in C
-	add X_INTRO_TOP_7          ; Add x_8
 	ld l, OBJ_INTRO_TOP_7 * OBJ_SIZE + OAMA_X
 	ld [hld], a                ; Store x_8 + t * 7/8 and move to the Y coordinate
-	dec [hl]                   ; Decrement the Y coordinate
-	
-	ld a, X_INTRO_TOP_0        ; Load x_1 into A
-	sub c                      ; Subtract t * 7/8
-	ld l, OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_X
-	ld [hld], a                ; Store x_1 - t * 7/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
 	
 	ld l, OBJ_INTRO_0 * OBJ_SIZE
