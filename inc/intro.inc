@@ -5,6 +5,8 @@
 include "color.inc"
 
 
+DEF STACK_SIZE           EQU  32
+
 DEF INTRO_SGB_DELAY      EQU $80
 
 IF !DEF(INTRO_SONG_DELAY)
