@@ -5,8 +5,6 @@
 include "color.inc"
 
 
-DEF STACK_SIZE           EQU  32
-
 DEF INTRO_SGB_DELAY      EQU $80
 
 DEF INTRO_REG_START      EQU  64
@@ -23,12 +21,12 @@ ENDC
 DEF INTRO_TOP_SLIM_WIDTH EQU   3
 DEF INTRO_TOP_NORM_WIDTH EQU   6
 
-DEF INTRO_0_WIDTH        EQU   2
-DEF INTRO_1_WIDTH        EQU   1
-DEF INTRO_2_WIDTH        EQU   2
-DEF INTRO_3_WIDTH        EQU   1
-DEF INTRO_4_WIDTH        EQU   2
-DEF INTRO_5_WIDTH        EQU   2
+DEF INTRO_N0_WIDTH       EQU   2
+DEF INTRO_I_WIDTH        EQU   1
+DEF INTRO_N1_WIDTH       EQU   2
+DEF INTRO_T_WIDTH        EQU   1
+DEF INTRO_D_WIDTH        EQU   2
+DEF INTRO_O_WIDTH        EQU   2
 
 DEF MAP_LOGO             EQU TILEMAP0
 DEF COL_LOGO             EQU   4
@@ -75,12 +73,12 @@ ELSE
 ENDC
 DEF X_INTRO_TOP_7        EQU X_INTRO_TOP_6 + INTRO_TOP_NORM_WIDTH
 
-DEF X_INTRO_0            EQU  39
-DEF X_INTRO_1            EQU  54
-DEF X_INTRO_2            EQU  60
-DEF X_INTRO_3            EQU  74
-DEF X_INTRO_4            EQU 108
-DEF X_INTRO_5            EQU 122
+DEF X_INTRO_N0           EQU  39
+DEF X_INTRO_I            EQU  54
+DEF X_INTRO_N1           EQU  60
+DEF X_INTRO_T            EQU  74
+DEF X_INTRO_D            EQU 108
+DEF X_INTRO_O            EQU 122
 
 DEF T_LOGO               EQU $01
 DEF T_REG                EQU $19
@@ -120,22 +118,29 @@ ELSE
 	DEF T_INTRO_BY_2     EQU T_INTRO_BY
 ENDC
 
-DEF T_INTRO_N0           EQU T_INTRO_BY        +  2
-DEF T_INTRO_I            EQU T_INTRO_N0        + 16
-DEF T_INTRO_T            EQU T_INTRO_I         +  8
-DEF T_INTRO_D            EQU T_INTRO_T         +  8
-DEF T_INTRO_O            EQU T_INTRO_D         + 16
-DEF T_INTRO_N            EQU T_INTRO_O         + 16
+DEF T_INTRO_N            EQU T_INTRO_BY        +  2
 DEF T_INTRO_E            EQU T_INTRO_N         + 32
+DEF T_INTRO_N0           EQU T_INTRO_E         + 32
+DEF T_INTRO_D            EQU T_INTRO_N0        + 16
+DEF T_INTRO_O            EQU T_INTRO_D         + 16
+DEF T_INTRO_I            EQU T_INTRO_O         + 16
+DEF T_INTRO_T            EQU T_INTRO_I         +  8
 
-DEF T_INTRO_0            EQU T_INTRO_N0
-DEF T_INTRO_1            EQU T_INTRO_I
-DEF T_INTRO_2            EQU T_INTRO_N
-DEF T_INTRO_3            EQU T_INTRO_T
-DEF T_INTRO_4            EQU T_INTRO_D
-DEF T_INTRO_5            EQU T_INTRO_O
-
+DEF T_INTRO_N1           EQU T_INTRO_N
 DEF T_INTRO_N2           EQU T_INTRO_N
+
+MACRO DEF_INTRO
+	DEF T_INTRO_\1       EQU T_INTRO_\2
+	DEF X_INTRO_\1       EQU X_INTRO_\2
+	DEF INTRO_\1_WIDTH   EQU INTRO_\2_WIDTH
+ENDM
+
+DEF_INTRO 0, N0
+DEF_INTRO 1, N1
+DEF_INTRO 2, D
+DEF_INTRO 3, O
+DEF_INTRO 4, I
+DEF_INTRO 5, T
 
 DEF COLOR8_STEP          EQU 64
 
@@ -276,5 +281,7 @@ FOR I, 1, 6
 	DEF OBJ_INTRO_{d:I}  EQU OBJ_INTRO_{d:_}   +  INTRO_{d:_}_WIDTH * 2
 ENDR
 DEF OBJ_INTRO_LOGO_END   EQU OBJ_INTRO_5       +  INTRO_5_WIDTH * 2
+
+DEF OBJ_INTRO_META_END   EQU OBJ_INTRO_4
 
 DEF OBJ_INTRO_END        EQU OBJ_INTRO_LOGO_END

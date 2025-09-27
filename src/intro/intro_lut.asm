@@ -23,31 +23,119 @@ ENDR
 
 N0_LUT:
 
-FOR I, 0, 2
-
-.y\@
+.y
 FOR T, 1, 97
 	db LOW(Y_INTRO_BOTTOM - T * 4)
 ENDR
 	ds 32, 0
 
-.x\@
-FOR T, 0, 96
-	db LOW(X_INTRO_0 - T * 4 + I * 8)
+.x
+FOR T, 1, 97
+	db LOW(X_INTRO_N0 - T * 4)
 ENDR
 	ds 32, 0
 
-.tile\@
+ASSERT (LOW(@) == 0)
+
+.tile
 FOR T, 0, 96
 IF (T & 4) == 0
-	db T_INTRO_0 + ((T & 3) << 2) + I * 2
+	db T_INTRO_N0 + ((T & 3) << 2)
 ELSE
-	db T_INTRO_0 + ((T & 3) << 2) + 2 - I * 2
+	db T_INTRO_N0 + ((T & 3) << 2) + 2
 ENDC
 ENDR
 	ds 32, 0
 
-.attrs\@
+.attrs
+FOR T, 0, 128
+IF (T & 4) == 0
+	db 0
+ELSE
+	db OAM_XFLIP
+ENDC
+ENDR
+
+N1_LUT:
+
+.y
+FOR T, 1, 65
+	db Y_INTRO_BOTTOM - T * 2
+ENDR
+	ds 64, 0
+
+.x
+FOR T, 1, 65
+	db LOW(X_INTRO_N1 - T * 2)
+ENDR
+	ds 64, 0
+
+.tile
+FOR T, 0, 64
+	db T_INTRO_N1 + (((T >> 2) & 7) << 2)
+ENDR
+	ds 64, 0
+
+.attrs
+	ds 128, 0
+
+ASSERT (LOW(@) == 0)
+
+D_LUT:
+
+.y
+FOR T, 1, 129
+	db LOW(Y_INTRO_BOTTOM - T * 3)
+ENDR
+
+.x
+FOR T, 1, 129
+	db LOW(X_INTRO_D + T * 3)
+ENDR
+
+.tile
+FOR T, 0, 128
+IF (T >> 1) & 4 == 0
+	db T_INTRO_D + (((T >> 1) & 3) << 2)
+ELSE
+	db T_INTRO_D + (((T >> 1) & 3) << 2) + 2
+ENDC
+ENDR
+
+.attrs
+FOR T, 0, 128
+IF (T >> 1) & 4 == 0
+	db 0
+ELSE
+	db OAM_XFLIP
+ENDC
+ENDR
+
+ASSERT (LOW(@) == 0)
+
+O_LUT:
+
+.y
+FOR T, 1, 97
+	db LOW(Y_INTRO_BOTTOM + T * 4)
+ENDR
+	ds 32, 0
+
+.x
+FOR T, 1, 129
+	db LOW(X_INTRO_O + T * 4)
+ENDR
+
+.tile
+FOR T, 0, 128
+IF (T & 4) == 0
+	db T_INTRO_O + ((T & 3) << 2)
+ELSE
+	db T_INTRO_O + ((T & 3) << 2) + 2
+ENDC
+ENDR
+
+.attrs
 FOR T, 0, 128
 IF (T & 4) == 0
 	db 0
@@ -58,63 +146,25 @@ ENDR
 
 ASSERT (LOW(@) == 0)
 
-ENDR
-
 I_LUT:
+
 .y
 FOR T, 1, 129
 	db LOW(Y_INTRO_BOTTOM + T * 3)
 ENDR
 
 .x
-FOR T, 0, 128
-	db LOW(X_INTRO_1 - T * 3)
+FOR T, 1, 129
+	db LOW(X_INTRO_I - T * 3)
 ENDR
 
 .tile
 FOR T, 0, 128
-	db T_INTRO_1 + ((T & 3) << 1)
+	db T_INTRO_I + ((T & 3) << 1)
 ENDR
 
 .attrs
 	ds 128, 0
-
-ASSERT (LOW(@) == 0)
-
-N1_LUT:
-
-FOR I, 0, 2
-
-.y\@
-FOR T, 1, 65
-	db Y_INTRO_BOTTOM - T * 2
-ENDR
-	ds 64, 0
-
-.x\@
-FOR T, 0, 64
-	db LOW(X_INTRO_2 - T * 2 + I * 8)
-ENDR
-	ds 64, 0
-
-
-.tile\@
-FOR T, 0, 64
-	db T_INTRO_2 + (((T >> 2) & 7) << 2) + I * 2
-ENDR
-	ds 64, 0
-
-.attrs\@
-FOR I, 0, 64
-IF (T >> 1) & 4 == 0
-	db 0
-ELSE
-	db OAMF_XFLIP
-ENDC
-ENDR
-	ds 64, 0
-
-ENDR
 
 ASSERT (LOW(@) == 0)
 
@@ -126,89 +176,16 @@ FOR T, 1, 129
 ENDR
 
 .x
-FOR T, 0, 128
-	db X_INTRO_3 - T
+FOR T, 1, 129
+	db X_INTRO_T - T
 ENDR
 
 .tile
 FOR T, 0, 128
-	db T_INTRO_3 + (((T >> 2) & 3) << 1)
+	db T_INTRO_T + (((T >> 2) & 3) << 1)
 ENDR
 
 .attrs
 	ds 128, 0
 
 ASSERT (LOW(@) == 0)
-
-D_LUT:
-
-FOR I, 0, 2
-
-.y\@
-FOR T, 1, 129
-	db LOW(Y_INTRO_BOTTOM - T * 3)
-ENDR
-
-.x\@
-FOR T, 0, 128
-	db LOW(X_INTRO_4 + T * 3 + I * 8)
-ENDR
-
-.tile\@
-FOR T, 0, 128
-IF (T >> 1) & 4 == 0
-	db T_INTRO_4 + (((T >> 1) & 3) << 2) + I * 2
-ELSE
-	db T_INTRO_4 + (((T >> 1) & 3) << 2) + 2 - I * 2
-ENDC
-ENDR
-
-.attrs\@
-FOR T, 0, 128
-IF (T >> 1) & 4 == 0
-	db 0
-ELSE
-	db OAM_XFLIP
-ENDC
-ENDR
-
-ENDR
-
-ASSERT (LOW(@) == 0)
-
-O_LUT:
-
-FOR I, 0, 2
-
-.y\@
-FOR T, 1, 97
-	db LOW(Y_INTRO_BOTTOM + T * 4)
-ENDR
-	ds 32, 0
-
-.x\@
-FOR T, 0, 128
-	db LOW(X_INTRO_5 + T * 4 + I * 8)
-ENDR
-
-.tile\@
-FOR T, 0, 128
-IF (T & 4) == 0
-	db T_INTRO_5 + ((T & 3) << 2) + I * 2
-ELSE
-	db T_INTRO_5 + ((T & 3) << 2) + 2 - I * 2
-ENDC
-ENDR
-
-.attrs\@
-FOR T, 0, 128
-IF (T & 4) == 0
-	db 0
-ELSE
-	db OAM_XFLIP
-ENDC
-ENDR
-
-ASSERT (LOW(@) == 0)
-
-ENDR

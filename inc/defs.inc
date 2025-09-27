@@ -5,6 +5,8 @@
 include "color.inc"
 
 
+DEF STACK_SIZE        EQU  32
+
 ; DEF INTRO_SONG        EQUS "intro_song"
 ; DEF INTRO_SONG_DELAY  EQUS "$10"
 

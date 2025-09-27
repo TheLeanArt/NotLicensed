@@ -37,24 +37,6 @@ MACRO CLEAR_LONG
 ENDM
 
 ; @param \1 Tiles prefix
-MACRO COPY_0_5BPP_PRE_SAFE
-	ld bc, \1Tiles.end - \1Tiles ; Set BC to the byte count
-.loop\@
-	rst WaitVRAM        ; Wait for VRAM to become accessible
-REPT 2
-	ld a, [de]          ; Load a byte from the address DE points to into the A register
-	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
-	xor a               ; Clear the A register
-	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
-ENDR
-	inc de              ; Increment the source pointer in DE
-	dec bc              ; Decrement the loop counter in BC
-	ld a, b             ; Load the value in B into A
-	or c                ; Logical OR the value in A (from B) with C
-	jr nz, .loop\@      ; If B and C are both zero, OR B will be zero, otherwise keep looping
-ENDM
-
-; @param \1 Tiles prefix
 MACRO COPY_1BPP_PRE_SAFE
 ASSERT(!HIGH(\1Tiles.end - \1Tiles))
 	ld b, \1Tiles.end - \1Tiles

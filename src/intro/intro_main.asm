@@ -48,10 +48,14 @@ ENDM
 
 MACRO INTRO_BOTTOM_INIT
 	ld b, T_INTRO_\1           ; Load tile ID
+IF \1 == 0
+	ld de, Y_INTRO_BOTTOM << 8 | X_INTRO_0
+ELSE
 	ld e, X_INTRO_\1           ; Load X coordinate
+ENDC
 IF \1 == 5
-	; Fall through
-	ASSERT (@ == SetMetaObject)
+	ASSERT (INTRO_\1_WIDTH == 1)
+	jr SetDoubleObject
 ELIF INTRO_\1_WIDTH == 1
 	call SetDoubleObject       ; Set the double-object
 ELSE
@@ -419,28 +423,47 @@ IntroMain:
 	
 	ld l, OBJ_INTRO_0 * OBJ_SIZE
 
-.bottomLoop
+.metaLoop
 	inc d                      ; Advance to the Y/X page
-	inc d                      ; Advance to the ID/attrs page
-	push de                    ; Save the step counter
-	ld a, [de]                 ; Load the tile ID value
-	ld b, a                    ; Store the tile ID value in B
-	set 7, e                   ; Advance to the second half-page
-	ld a, [de]                 ; Load the attributes value
-	ld c, a                    ; Store the attributes value in C
-	dec d                      ; Go back to the Y/X page
-	ld a, [de]                 ; Load the X value
-	ld h, a                    ; Store the X value in H
-	res 7, e                   ; Go back to the first half-page
-	ld a, [de]                 ; Load the Y value
-	ld d, a                    ; Store the Y value in D
-	ld e, h                    ; Load the X value in E
-	ld h, HIGH(wShadowOAM)     ; Load the upper address byte into H
-	call SetDoubleObject       ; Set the double-object
-	pop de                     ; Restore the step counter
+	push de                    ; Save the page and the step counter
+	push hl                    ; Save the destination address
+	ld h, d                    ; Load the page into H
+	ld l, e                    ; Load the step into L
+	ld d, [hl]                 ; Load the Y value
+	set 7, l                   ; Advance to the second half-page
+	ld e, [hl]                 ; Load the X value
+	inc h                      ; Advance to the tile/attrs page
+	ld c, [hl]                 ; Load the attributes value
+	res 7, l                   ; Go back to the first half-page
+	ld b, [hl]                 ; Load the tile ID value
+	pop hl                     ; Restore the destination address
+	call SetMetaObject         ; Set the meta-object
+	pop de                     ; Restore the page and the step counter
+	inc d                      ; Advance to the tile/attrs page
 	ld a, l                    ; Load the value in L into A
-	cp OBJ_INTRO_END * OBJ_SIZE; End object reached?
-	jr nz, .bottomLoop         ; If not, continue to loop
+	cp OBJ_INTRO_META_END * OBJ_SIZE ; End meta-object reached?
+	jr nz, .metaLoop           ; If not, continue to loop
+
+.dblLoop
+	inc d                      ; Advance to the Y/X page
+	push de                    ; Save the page and the step counter
+	push hl                    ; Save the destination address
+	ld h, d                    ; Load the page into H
+	ld l, e                    ; Load the step into L
+	ld d, [hl]                 ; Load the Y value
+	set 7, l                   ; Advance to the second half-page
+	ld e, [hl]                 ; Load the X value
+	inc h                      ; Advance to the tile/attrs page
+	ld c, [hl]                 ; Load the attributes value
+	res 7, l                   ; Go back to the first half-page
+	ld b, [hl]                 ; Load the tile ID value
+	pop hl                     ; Restore the destination address
+	call SetDoubleObject       ; Set the double-object
+	pop de                     ; Restore the page and the step counter
+	inc d                      ; Advance to the tile/attrs page
+	ld a, l                    ; Load the value in L into A
+	cp OBJ_INTRO_END * OBJ_SIZE; End double-object reached?
+	jr nz, .dblLoop            ; If not, continue to loop
 	ret
 
 SetOddballMetaTile:
@@ -536,16 +559,18 @@ SetObject::
 
 InitBottom:
 	ld hl, wShadowOAM + OBJ_INTRO_0 * OBJ_SIZE
-	ld bc, T_INTRO_0 << 8      ; Load tile ID and attributes
-	ld de, Y_INTRO_BOTTOM << 8 | X_INTRO_0
-	call SetMetaObject         ; Set the meta-object
 
-FOR I, 1, 6
+FOR I, 6
 	INTRO_BOTTOM_INIT {d:I}
 ENDR
 
 SetMetaObject:
 	call SetDoubleObject       ; Set the first double-object
+	bit B_OAM_XFLIP, c         ; Is it flipped?
+	jr z, SetDoubleObject      ; If not, continue
+	ld a, b                    ; Load the tile ID into A
+	sub 4                      ; Adjust tile ID
+	ld b, a                    ; Store the new tile ID in B
 	; Fall through
 
 SetDoubleObject:
