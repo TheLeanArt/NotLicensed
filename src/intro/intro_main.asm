@@ -200,10 +200,10 @@ ENDC
 	res 7, e                   ; Go back to the first half-page
 
 	ld a, e                    ; Load the value in E into A
-	sub 64                     ; Step 64 reached?
+	sub INTRO_REG_START + 1    ; Starting step reached?
 	jr c, .regDone             ; If not, skip setting tile ID and attributes
-	jr z, .regDone             ; If just, skip setting tile ID and attributes
-	and 3                      ; Isolate rotation step
+	inc a                      ; Compensate for step adjustment
+	and INTRO_REG_MASK         ; Isolate rotation toggle
 	jr nz, .regTile            ; If nonzero, skip setting attributes
 .regAttrs
 	inc l                      ; Advance to attributes
@@ -212,7 +212,7 @@ ENDC
 	ld [hld], a                ; Set the new attributes
 .regTile
 	inc [hl]                   ; Increment the tile ID
-	res 2, [hl]                ; Isolate rotation step
+	res B_INTRO_REG_LENGTH, [hl] ; Isolate rotation step
 .regDone
 
 
