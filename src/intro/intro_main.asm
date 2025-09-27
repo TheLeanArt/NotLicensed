@@ -202,17 +202,17 @@ ENDC
 	ld a, e                    ; Load the value in E into A
 	sub INTRO_REG_START + 1    ; Starting step reached?
 	jr c, .regDone             ; If not, skip setting tile ID and attributes
+.regTile
 	inc a                      ; Compensate for step adjustment
-	and INTRO_REG_MASK         ; Isolate rotation toggle
-	jr nz, .regTile            ; If nonzero, skip setting attributes
+	and INTRO_REG_MASK         ; Isolate rotation step
+	add T_INTRO_REG            ; Add base tile ID
+	ld [hli], a                ; Set the tile ID
+	sub T_INTRO_REG            ; Subtract base tile ID
+	jr nz, .regDone            ; If nonzero, skip setting the attributes
 .regAttrs
-	inc l                      ; Advance to attributes
 	ld a, OAM_XFLIP | OAM_YFLIP; Rotate 180 degrees
 	xor [hl]                   ; Apply to the current attributes
-	ld [hld], a                ; Set the new attributes
-.regTile
-	inc [hl]                   ; Increment the tile ID
-	res B_INTRO_REG_LENGTH, [hl] ; Isolate rotation step
+	ld [hl], a                 ; Set the new attributes
 .regDone
 
 
@@ -502,7 +502,9 @@ ENDR
 	; Fall through
 
 InitReg:
+IF T_INTRO_REG != T_INTRO_TOP_7 + 1
 	ld b, T_INTRO_REG          ; Load tile ID
+ENDC
 	                           ; Compensate for width adjustment
 	ld de, Y_INTRO_REG << 8 | (X_INTRO_REG + 2)
 ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
