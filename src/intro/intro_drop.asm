@@ -14,7 +14,7 @@ IntroDropLUT::
 .SCY
 
 FOR T, 0, 64
-	db 64 - ((T * T) / 64 - 4)
+	db 64 - ((T * T) / 64)
 ENDR
 	db 0, 1, 2, 2, 1, 0
 
