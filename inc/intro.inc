@@ -82,22 +82,13 @@ DEF X_INTRO_O            EQU 122
 
 DEF T_LOGO               EQU $01
 DEF T_REG                EQU $19
+DEF T_INTRO_NOT_2        EQU T_REG             +  1
+DEF T_INTRO_BY           EQU T_INTRO_NOT_2     +  2
+DEF T_INTRO_TOP_0_2      EQU T_INTRO_BY        +  1
+DEF T_INTRO_BY_1         EQU T_INTRO_TOP_0_2   +  1
+
 DEF T_INTRO_NOT          EQU $20
-
-IF DEF(COLOR8)
-	DEF T_INTRO_NOT_2    EQU T_REG             +  2
-ELSE
-	DEF T_INTRO_NOT_2    EQU T_INTRO_NOT
-ENDC
-
 DEF T_INTRO_TOP_0        EQU T_INTRO_NOT       +  2
-
-IF DEF(COLOR8)
-	DEF T_INTRO_TOP_0_2  EQU T_INTRO_NOT_2     +  2
-ELSE
-	DEF T_INTRO_TOP_0_2  EQU T_INTRO_TOP_0
-ENDC
-
 DEF T_INTRO_TOP_1        EQU T_INTRO_TOP_0     +  1
 DEF T_INTRO_TOP_2        EQU T_INTRO_TOP_1     +  1
 DEF T_INTRO_TOP_3        EQU T_INTRO_TOP_2     +  1
@@ -107,18 +98,11 @@ IF DEF(EN_GB)
 ELSE
     DEF T_INTRO_TOP_5    EQU T_INTRO_TOP_4     +  1
 ENDC
-DEF T_INTRO_TOP_6        EQU T_INTRO_TOP_4     +  2
-DEF T_INTRO_TOP_7        EQU T_INTRO_TOP_6     +  1
+DEF T_INTRO_TOP_6        EQU T_INTRO_TOP_3
+DEF T_INTRO_TOP_7        EQU T_INTRO_TOP_4     +  2
 DEF T_INTRO_REG          EQU T_INTRO_TOP_7     +  1
-DEF T_INTRO_BY           EQU T_INTRO_REG       +  INTRO_REG_LENGTH
 
-IF DEF(COLOR8)
-	DEF T_INTRO_BY_2     EQU T_INTRO_TOP_0_2   +  1
-ELSE
-	DEF T_INTRO_BY_2     EQU T_INTRO_BY
-ENDC
-
-DEF T_INTRO_N            EQU T_INTRO_BY        +  2
+DEF T_INTRO_N            EQU $30
 DEF T_INTRO_E            EQU T_INTRO_N         + 32
 DEF T_INTRO_N0           EQU T_INTRO_E         + 32
 DEF T_INTRO_D            EQU T_INTRO_N0        + 16
