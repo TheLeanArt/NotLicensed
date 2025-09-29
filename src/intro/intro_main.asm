@@ -244,6 +244,7 @@ ENDC
 	rst WaitVBlank             ; Wait for the next VBlank
 
 	ld a, e                    ; Load the step counter into A
+	dec a                      ; Skip step 0
 	and 3                      ; Shift Y every 4th step (and clear CF)
 	jr nz, .byDone             ; If not on 4th step, skip to updating E
 

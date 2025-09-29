@@ -12,12 +12,12 @@ SECTION "Intro LUT", ROMX, ALIGN[8]
 IntroLUT::
 
 E_LUT:
-FOR T, 0, 128
+FOR T, 1, 129
 	db T_INTRO_E + ((T >> 3) & 7) << 2
 ENDR
 
 N2_LUT:
-FOR T, 0, 128
+FOR T, 1, 129
 	db T_INTRO_N2 + ((T >> 2) & 7) << 2
 ENDR
 
@@ -38,7 +38,7 @@ ENDR
 ASSERT (LOW(@) == 0)
 
 .tile
-FOR T, 0, 96
+FOR T, 1, 97
 IF (T & 4) == 0
 	db T_INTRO_N0 + ((T & 3) << 2)
 ELSE
@@ -48,7 +48,7 @@ ENDR
 	ds 32, 0
 
 .attrs
-FOR T, 0, 128
+FOR T, 1, 129
 IF (T & 4) == 0
 	db 0
 ELSE
@@ -71,7 +71,7 @@ ENDR
 	ds 64, 0
 
 .tile
-FOR T, 0, 64
+FOR T, 1, 65
 	db T_INTRO_N1 + (((T >> 2) & 7) << 2)
 ENDR
 	ds 64, 0
@@ -94,7 +94,7 @@ FOR T, 1, 129
 ENDR
 
 .tile
-FOR T, 0, 128
+FOR T, 1, 129
 IF (T >> 1) & 4 == 0
 	db T_INTRO_D + (((T >> 1) & 3) << 2)
 ELSE
@@ -103,7 +103,7 @@ ENDC
 ENDR
 
 .attrs
-FOR T, 0, 128
+FOR T, 1, 129
 IF (T >> 1) & 4 == 0
 	db 0
 ELSE
@@ -127,7 +127,7 @@ FOR T, 1, 129
 ENDR
 
 .tile
-FOR T, 0, 128
+FOR T, 1, 129
 IF (T & 4) == 0
 	db T_INTRO_O + ((T & 3) << 2)
 ELSE
@@ -136,7 +136,7 @@ ENDC
 ENDR
 
 .attrs
-FOR T, 0, 128
+FOR T, 1, 129
 IF (T & 4) == 0
 	db 0
 ELSE
@@ -159,7 +159,7 @@ FOR T, 1, 129
 ENDR
 
 .tile
-FOR T, 0, 128
+FOR T, 1, 129
 	db T_INTRO_I + ((T & 3) << 1)
 ENDR
 
@@ -181,7 +181,7 @@ FOR T, 1, 129
 ENDR
 
 .tile
-FOR T, 0, 128
+FOR T, 1, 129
 	db T_INTRO_T + (((T >> 2) & 3) << 1)
 ENDR
 
