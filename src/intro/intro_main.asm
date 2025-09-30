@@ -255,10 +255,15 @@ ENDC
 	ld [hl], a                 ; Clear any lingering Os
 	ld a, [de]                 ; Load the lower address byte
 	ld l, a                    ; Store the lower address byte in L
+	inc a                      ; Increment the lower address byte
+	and TILEMAP_WIDTH - 1      ; Modulo 32
+	or ROW_INTRO_TOP * TILEMAP_WIDTH
+	ld b, a                    ; Save the lower address byte
 	inc e                      ; Advance to the tile ID
 	ld a, [de]                 ; Load the tile ID
-	ld [hli], a                ; Set left tile
+	ld [hl], a                 ; Set left tile
 	inc a                      ; Increment tile ID
+	ld l, b                    ; Restore the lower address byte
 	ld [hl], a                 ; Set right tile
 	sra e                      ; Restore the step counter
 
