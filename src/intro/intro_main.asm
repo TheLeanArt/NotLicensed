@@ -242,32 +242,46 @@ ENDC
 .mainLoop
 	rst WaitVBlank             ; Wait for the next VBlank
 
-	ld a, e                    ; Load the step counter into A
-	or a                       ; Are we on step 0?
-	jr z, .shiftDone           ; If yes, skip to updating E
-
 	bit 6, e                   ; Step 64 reached?
 	jr nz, .shiftDone          ; If yes, skip to updating E
-	sla e                      ; Multiply the step by 2
-	ld d, HIGH(OLUT)           ; Set the upper address byte to the start of our LUT
+
+	ld a, e                    ; Load the step counter into A
+	srl a                      ; Divide by 2
+	srl a                      ; Divide by 2
+	add e                      ; Add t * 2
+	add e                      ; ...
+	ld b, a                    ; Store t * 9/4 in B
+	swap a                     ; Divide by 8
+	rlca                       ; ...
+	ld c, a                    ; Store t * 9/4 / 8 in C
+	
 	INIT_VRAM_HL INTRO_TOP     ; Load the top row's address into the HL register
 	xor a                      ; Set A to zero
 	ld [hl], a                 ; Clear any lingering Os
-	ld a, [de]                 ; Load the lower address byte
-	ld l, a                    ; Store the lower address byte in L
-	inc a                      ; Increment the lower address byte
-	and TILEMAP_WIDTH - 1      ; Modulo 32
-	or ROW_INTRO_TOP * TILEMAP_WIDTH
-	ld b, a                    ; Save the lower address byte
-	inc e                      ; Advance to the tile ID
-	ld a, [de]                 ; Load the tile ID
+
+	ld a, COL_INTRO_O          ; Load the base column into A
+	sub c                      ; Subtract t * 9/4 / 8
+	and TILEMAP_WIDTH - 1      ; Stay within the row
+	or l                       ; Adjust row
+	ld l, a                    ; Load the lower address byte into L
+	ld a, b                    ; Load t * 9/4
+	and $07                    ; Isolate tile pair index
+	add a                      ; Multiply by 2
+	or T_INTRO_TOP_O           ; Adjust tile ID
 	ld [hl], a                 ; Set left tile
+
 	inc a                      ; Increment tile ID
-	ld l, b                    ; Restore the lower address byte
-	ld [hl], a                 ; Set right tile
-	sra e                      ; Restore the step counter
+	ld b, a                    ; Store tile ID in B
+	ld a, l                    ; Load the lower address byte into A
+	inc a                      ; Increment the lower address byte
+	and TILEMAP_WIDTH - 1      ; Stay within the row
+	or ROW_INTRO_TOP * TILEMAP_WIDTH
+	ld l, a                    ; Load the lower address byte into L
+	ld [hl], b                 ; Set right tile
 
 	ld a, e                    ; Load the step counter into A
+	or a                       ; Skip the first step
+	jr z, .shiftDone           ; If zero, skip to updating E
 	and 3                      ; Shift Y every 4th step (and clear CF)
 	jr nz, .shiftDone          ; If not on 4th step, skip to updating E
 
@@ -832,15 +846,6 @@ REPT 6
 	dw C_INTRO_BOTTOM_SGB
 ENDR
 	db 0
-
-
-SECTION "OLUT", ROM0, ALIGN[8]
-OLUT:
-FOR I, 64
-DEF _ = (I * 9 / 4)
-	db ROW_INTRO_O * TILEMAP_WIDTH + (COL_INTRO_O - {d:_} / 8) % 32
-	db T_INTRO_TOP_O | ({d:_} % 8) * 2
-ENDR
 
 
 SECTION "IntroInitSGB", ROM0
