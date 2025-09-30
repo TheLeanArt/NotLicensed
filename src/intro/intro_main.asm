@@ -77,8 +77,7 @@ Intro::
 
 	INIT_VRAM_HL LOGO          ; Load the background logo address into the HL register
 	call ClearLogo             ; Clear the logo from the background
-	rst WaitVRAM               ; Wait for VRAM to become accessible
-	call InitBy                ; Draw BY on the background
+	call InitOAndBy            ; Draw top O and BY on the background
 	
 	INIT_VRAM_HL LOGO2         ; Load the window logo address into the HL register
 	ld b, T_LOGO               ; Load the first tile index into the B register
@@ -244,10 +243,30 @@ ENDC
 	rst WaitVBlank             ; Wait for the next VBlank
 
 	ld a, e                    ; Load the step counter into A
-	dec a                      ; Skip step 0
-	and 3                      ; Shift Y every 4th step (and clear CF)
-	jr nz, .byDone             ; If not on 4th step, skip to updating E
+	or a                       ; Are we on step 0?
+	jr z, .shiftDone           ; If yes, skip to updating E
 
+	bit 6, e                   ; Step 64 reached?
+	jr nz, .shiftDone          ; If yes, skip to updating E
+	sla e                      ; Multiply the step by 2
+	ld d, HIGH(OLUT)           ; Set the upper address byte to the start of our LUT
+	INIT_VRAM_HL INTRO_TOP     ; Load the top row's address into the HL register
+	xor a                      ; Set A to zero
+	ld [hl], a                 ; Clear any lingering Os
+	ld a, [de]                 ; Load the lower address byte
+	ld l, a                    ; Store the lower address byte in L
+	inc e                      ; Advance to the tile ID
+	ld a, [de]                 ; Load the tile ID
+	ld [hli], a                ; Set left tile
+	inc a                      ; Increment tile ID
+	ld [hl], a                 ; Set right tile
+	sra e                      ; Restore the step counter
+
+	ld a, e                    ; Load the step counter into A
+	and 3                      ; Shift Y every 4th step (and clear CF)
+	jr nz, .shiftDone          ; If not on 4th step, skip to updating E
+
+.bShift
 	ld hl, STARTOF(VRAM) | T_INTRO_BY << 4
 	bit 2, e                   ; Shift B every 8th step
 	jr z, .yShift              ; If not on 8th step, skip to shifting Y
@@ -275,7 +294,7 @@ ENDC
 	bit 4, l                   ; Tile boundary crossed?
 	jr z, .yLoop               ; If not, keep looping
 
-.byDone
+.shiftDone
 	ld d, HIGH(IntroLUT)       ; Set the upper address byte to the start of our LUT
 
 	INTRO_META_SET E           ; Update E's tiles
@@ -379,67 +398,69 @@ IntroMain:
 	sub c                      ; Subtract t/8
 	ld b, a                    ; Store t * 3/8 in B
 
-	ld a, X_INTRO_NOT          ; Load x_0 into A
+	ld a, X_INTRO_TOP_0        ; Load x_-1 into A
+	sub e                      ; Subtract t
+	sub b                      ; Subtract t * 3/8
+	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_X
+	ld [hld], a                ; Store x_0 - t * 11/8 and move to the Y coordinate
+	dec [hl]                   ; Decrement the Y coordinate
+
+	ld a, X_INTRO_TOP_1        ; Load x_0 into A
 	sub e                      ; Subtract t
 	sub c                      ; Subtract t / 8
-	ld hl, wShadowOAM + OBJ_INTRO_NOT * OBJ_SIZE + OAMA_X
+	ld l, OBJ_INTRO_TOP_1 * OBJ_SIZE + OAMA_X
 	ld [hld], a                ; Store x_0 - t * 9/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
 
-	add TILE_WIDTH             ; Add 8
-	ld l, (OBJ_INTRO_NOT + 1) * OBJ_SIZE + OAMA_X
-	ld [hld], a                ; Store x_0 - t * 9/8 + 8 and move to the Y coordinate
-	dec [hl]                   ; Decrement the Y coordinate
-
-	ld a, X_INTRO_TOP_0        ; Load x_1 into A
+	ld a, X_INTRO_TOP_2        ; Load x_1 into A
 	sub e                      ; Subtract t
 	add c                      ; Add t * 7/8
-	ld l, OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_X
+	ld l, OBJ_INTRO_TOP_2 * OBJ_SIZE + OAMA_X
 	ld [hld], a                ; Store x_1 - t * 7/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
 
-	ld a, X_INTRO_TOP_1        ; Load x_2 into A
+	ld a, X_INTRO_TOP_3        ; Load x_2 into A
 	sub e                      ; Subtract e
 	add b                      ; Subtract t * 3/8
-	ld l, OBJ_INTRO_TOP_1 * OBJ_SIZE + OAMA_X
+	ld l, OBJ_INTRO_TOP_3 * OBJ_SIZE + OAMA_X
 	ld [hld], a                ; Store x_2 - t * 5/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
 
-	ld a, X_INTRO_TOP_2        ; Load x_3 into A
+	ld a, X_INTRO_TOP_4        ; Load x_3 into A
 	sub b                      ; Subtract t * 3/8
-	ld l, OBJ_INTRO_TOP_2 * OBJ_SIZE + OAMA_X
+	ld l, OBJ_INTRO_TOP_4 * OBJ_SIZE + OAMA_X
 	ld [hld], a                ; Store x_3 - t * 3/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
 
-	ld a, X_INTRO_TOP_3        ; Load x_4 into A
+	ld a, X_INTRO_TOP_5        ; Load x_4 into A
 	sub c                      ; Subtract t/8
-	ld l, OBJ_INTRO_TOP_3 * OBJ_SIZE + OAMA_X
+	ld l, OBJ_INTRO_TOP_5 * OBJ_SIZE + OAMA_X
 	ld [hld], a                ; Store x_4 - t * 1/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
 
-	ld a, X_INTRO_TOP_4        ; Load x_5 into A
+	ld a, X_INTRO_TOP_6        ; Load x_5 into A
 	add c                      ; Add t/8
-	ld l, OBJ_INTRO_TOP_4 * OBJ_SIZE + OAMA_X
+	ld l, OBJ_INTRO_TOP_6 * OBJ_SIZE + OAMA_X
 	ld [hld], a                ; Store x_5 + t * 1/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
 
-	ld a, X_INTRO_TOP_5        ; Load x_5 into A
+	ld a, X_INTRO_TOP_7        ; Load x_5 into A
 	add b                      ; Add t * 3/8
-	ld l, OBJ_INTRO_TOP_5 * OBJ_SIZE + OAMA_X
+	ld l, OBJ_INTRO_TOP_7 * OBJ_SIZE + OAMA_X
 	ld [hld], a                ; Store x_5 + t * 3/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
 
-	ld a, X_INTRO_TOP_6        ; Load x_7 into A
+	ld a, X_INTRO_TOP_8        ; Load x_7 into A
 	add e                      ; Add t
 	sub b                      ; Subtract t * 3/8
-	ld l, OBJ_INTRO_TOP_6 * OBJ_SIZE + OAMA_X
+	ld l, OBJ_INTRO_TOP_8 * OBJ_SIZE + OAMA_X
 	ld [hld], a                ; Store x_7 + t * 5/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
 
-	ld a, X_INTRO_TOP_7        ; Load x_8 into A
+	ld a, X_INTRO_TOP_9        ; Load x_8 into A
 	add e                      ; Add t
 	sub c                      ; Subtract t/8
-	ld l, OBJ_INTRO_TOP_7 * OBJ_SIZE + OAMA_X
+	ld l, OBJ_INTRO_TOP_9 * OBJ_SIZE + OAMA_X
 	ld [hld], a                ; Store x_8 + t * 7/8 and move to the Y coordinate
 	dec [hl]                   ; Decrement the Y coordinate
 	
@@ -535,19 +556,18 @@ SetLogo:
 	ret
 
 InitTop:
-	ld hl, wShadowOAM + OBJ_INTRO_NOT * OBJ_SIZE
-	ld bc, T_INTRO_NOT << 8    ; Load tile ID and attributes
-	ld de, Y_INTRO_INIT << 8 | X_INTRO_NOT
-	call SetObject             ; Set the first object
-	call SetObject             ; Set the second object
+	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE
+	ld bc, T_INTRO_TOP_0 << 8  ; Load tile ID and attributes
+	ld de, Y_INTRO_INIT << 8 | X_INTRO_TOP_0
+	call SetObject             ; Set the N object
 
-FOR I, 8
+FOR I, 1, INTRO_TOP_COUNT
 	INTRO_TOP_INIT {d:I}
 ENDR
 	; Fall through
 
 InitReg:
-IF T_INTRO_REG != T_INTRO_TOP_7 + 1
+IF T_INTRO_REG != T_INTRO_TOP_9 + 1
 	ld b, T_INTRO_REG          ; Load tile ID
 ENDC
 	                           ; Compensate for width adjustment
@@ -613,20 +633,19 @@ Color8:
 	ld b, 1                    ; Set the palette to 1
 	call SetByAttrs            ; Set attributes
 
-	ld hl, wShadowOAM + OBJ_INTRO_NOT * OBJ_SIZE + OAMA_TILEID
+	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_TILEID
 	ld a, T_INTRO_NOT_2
 	ld [hl], a
-	ld l, (OBJ_INTRO_NOT + 1) * OBJ_SIZE + OAMA_TILEID
+	ld l, OBJ_INTRO_TOP_1 * OBJ_SIZE + OAMA_TILEID
 	inc a
 	ld [hl], a
-	ld l, OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_TILEID
-	ld a, T_INTRO_TOP_0_2
+	ld l, OBJ_INTRO_TOP_2 * OBJ_SIZE + OAMA_TILEID
+	ld a, T_INTRO_TOP_2_2
 	ld [hli], a
-	xor a
-FOR I, 0, 8
-IF I > 0
-	ld l, (I + 2) * OBJ_SIZE + OAMA_FLAGS
-ENDC
+	ld a, 1
+	ld [hl], a
+FOR I, 3, INTRO_TOP_COUNT
+	ld l, OBJ_INTRO_TOP_{d:I} * OBJ_SIZE + OAMA_FLAGS
 	ld [hl], a
 	inc a
 ENDR
@@ -635,24 +654,31 @@ ENDR
 
 ENDC
 
-InitBy:
+InitOAndBy:
+	INIT_VRAM_HL INTRO_O       ; Load the meta-tile address into the HL register
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ld a, T_INTRO_TOP_O        ; Load left tile ID
+	call .do                   ; Set O's tiles
+	ld l, ROW_INTRO_BY * TILEMAP_WIDTH + COL_INTRO_BY
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld a, T_INTRO_BY           ; Load left tile ID
-	INIT_VRAM_HL INTRO_BY      ; Load the meta-tile address into the HL register
 	ld [hli], a                ; Set left tile
 	ld a, T_INTRO_BY_1         ; Load middle tile ID
+.do
 	ld [hli], a                ; Set middle tile
 	inc a                      ; Increment tile ID
 	ld [hl], a                 ; Set right tile
 	ret
 
 SetByAttrs::
-	INIT_VRAM_HL INTRO_BY      ; Load the meta-tile address into the HL register
+	INIT_VRAM_HL INTRO_TOP     ; Load the top row's address into the HL register
 	ld a, VBK_BANK             ; Set A to one
 	ldh [rVBK], a              ; Switch the VRAM bank to attributes
 	ld a, b                    ; Load the attributes into A
-	ld [hli], a                ; Set the left tile's attributes
-	ld [hli], a                ; Set the middle tile's attributes
-	ld [hl], a                 ; Set the right tile's attributes
+.loop
+	ld [hli], a                ; Set attributes
+	bit 5, l                   ; Row boundary crossed?
+	jr nz, .loop               ; If not, keep looping
 	xor a                      ; Set A to zero
 	ldh [rVBK], a              ; Switch the VRAM bank back to tile IDs
 	ret
@@ -663,10 +689,10 @@ SetPalettes:
 
 IF DEF(COLOR8)
 
-FOR I, 0, 8
-	ld a, OBPI_AUTOINC | I << 3 | 2
+FOR I, 2, INTRO_TOP_COUNT
+	ld a, OBPI_AUTOINC | (I - 2) << 3 | 2
 	ld [hli], a
-IF I == 0
+IF I == 2
 IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
 	IF C_INTRO_BOTTOM
 		ld a, LOW(C_INTRO_BOTTOM)
@@ -680,10 +706,10 @@ ELSE
 	ld [hl], c
 	ld [hl], b
 ENDC
-	ld bc, C_INTRO_NOT
+	ld bc, C_INTRO_TOP_0
 	ld [hl], c
 	ld [hl], b
-	ld bc, C_INTRO_TOP_0
+	ld bc, C_INTRO_TOP_1
 ELSE
 DEF _ = (I - 1)
 IF HIGH(C_INTRO_TOP_{d:I}) == HIGH(C_INTRO_TOP_{d:_})
@@ -696,6 +722,11 @@ ENDC
 ENDC
 	ld [hl], c
 	ld [hl], b
+IF I == 3
+	ld bc, C_INTRO_TOP_2
+	ld [hl], c
+	ld [hl], b
+ENDC
 	dec l
 ENDR
 	ret
@@ -763,10 +794,24 @@ IF LOW(C_INTRO_BY2) == HIGH(C_INTRO_BY2)
 		ld a, LOW(C_INTRO_BY2)
 	ENDC
 	ld [hl], a
-	ld [hli], a
+	ld [hl], a
 ELSE
 	IF C_INTRO_BY2 != C_INTRO_BY1
 		ld bc, C_INTRO_BY2
+	ENDC
+	ld [hl], c
+	ld [hl], b
+ENDC
+
+IF LOW(C_INTRO_TOP_O) == HIGH(C_INTRO_TOP_O)
+	IF C_INTRO_TOP_O != C_INTRO_BY2
+		ld a, LOW(C_INTRO_TOP_O)
+	ENDC
+	ld [hl], a
+	ld [hli], a
+ELSE
+	IF C_INTRO_TOP_O != C_INTRO_BY2
+		ld bc, C_INTRO_TOP_O
 	ENDC
 	ld [hl], c
 	ld [hl], b
@@ -782,6 +827,15 @@ REPT 6
 	dw C_INTRO_BOTTOM_SGB
 ENDR
 	db 0
+
+
+SECTION "OLUT", ROM0, ALIGN[8]
+OLUT:
+FOR I, 64
+DEF _ = (I * 9 / 4)
+	db ROW_INTRO_O * TILEMAP_WIDTH + (COL_INTRO_O - {d:_} / 8) % 32
+	db T_INTRO_TOP_O | ({d:_} % 8) * 2
+ENDR
 
 
 SECTION "IntroInitSGB", ROM0
