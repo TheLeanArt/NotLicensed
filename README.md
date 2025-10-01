@@ -87,3 +87,4 @@ Feel free to use in your project (but consider dropping me a line).
 * calc84maniac for the optimisations
 * ISSOtm for great optimisation ideas
 * nitro2k01 and ku🐧 for helping to fix the colour LUTs
+* Rangi42 for her endless patience
