@@ -29,5 +29,12 @@ DEF STACK_SIZE        EQU  32
 ; DEF C_INTRO_GRADIENT_TOP    EQU  C_LIGHT_GRAY
 ; DEF C_INTRO_GRADIENT_BOTTOM EQU  C_WHITE
 
-; DEF FADEOUT           EQUS ""
-; DEF EN_GB             EQUS ""
+; DEF FADEOUT                 EQUS ""
+; DEF FADEOUT_DMG             EQUS ""
+; DEF FADEOUT_START           EQU  48
+; DEF FADEOUT_LENGTH          EQU  48
+; DEF FADEOUT_DMG_P1          EQU  %00_00_11_01
+; DEF FADEOUT_DMG_P2          EQU  %00_00_11_10
+; DEF FADEOUT_DMG_P3          EQU  %00_00_11_11
+
+; DEF EN_GB                   EQUS ""

@@ -325,7 +325,7 @@ IF DEF(FADEOUT)
 	ldh a, [hFlags]            ; Load our flags into the A register
 	ld d, a                    ; Store the flags in the D register
 	and FLAGS_GBC | FLAGS_SGB  ; Are we running on GBC/SGB?
-	jr z, .fadeOutDone         ; If not, proceed to play sound
+	jr z, .fadeOutDMG          ; If not, proceed to fade out DMG
 	ld a, e                    ; Load the value in E into A
 	sub FADEOUT_START          ; Adjust to start of fadeout
 	jr c, .fadeOutDone         ; If not reached, proceed to play sound
@@ -360,6 +360,29 @@ IF DEF(FADEOUT)
 	call SGB_SendPacket        ; Set SGB palette
 	pop de                     ; Restore the step counter
 
+.fadeOutDMG
+
+IF DEF(FADEOUT_DMG)
+
+	ld a, e                    ; Load the value in E into A
+	cp FADEOUT_START           ; Start fadeout?
+	jr z, .fade1               ; If true, proceed to set dark palettes
+	cp FADEOUT_MIDDLE          ; Continue fadeout?
+	jr nz, .fadeOutDone        ; If true, proceed to set light palettes
+
+.fade2
+	ld a, FADEOUT_DMG_P2       ; Set the second palette
+	jr .fadeCont               ; Proceed to set palettes
+
+.fade1
+	ld a, FADEOUT_DMG_P1       ; Set the first palette
+
+.fadeCont
+	ldh [rBGP], a              ; Set the background palette
+	ldh [rOBP0], a             ; Set the default object palette
+
+ENDC
+
 .fadeOutDone
 
 ENDC
@@ -373,6 +396,12 @@ ENDC
 	inc e                      ; Increment the step counter
 	bit 7, e                   ; Step 128 reached?
 	jp z, .mainLoop            ; If not, continue to loop
+
+IF DEF(FADEOUT_DMG)
+	ld a, FADEOUT_DMG_P3       ; Set the final palette
+	ld [rBGP], a               ; Set the background palette
+	ld [rOBP0], a              ; Set the default object palette
+ENDC
 
 IF DEF(INTRO_SONG) && INTRO_SONG_DELAY
 	ld b, INTRO_SONG_DELAY     ; Small delay for the audio to finish playing
