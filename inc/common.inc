@@ -86,6 +86,14 @@ MACRO MEM_COPY
 	call MemCopy        ; Call the copy subroutine
 ENDM
 
+MACRO _0_5_BPP
+PURGE _
+DEF _ EQUS READFILE(\1)
+FOR I, 0, BYTELEN(#_), 2
+	db STRBYTE(#_, I)
+ENDR
+ENDM
+
 ; @param \1 First color
 ; @param \2 Second color
 ; @param \3 Step count

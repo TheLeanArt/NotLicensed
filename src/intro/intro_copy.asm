@@ -131,28 +131,14 @@ TopOTiles:
 .end
 
 Intro1Tiles:
-FOR I, 0, 256, 2
-	INCBIN "intro_n.1bpp", I, 1
-ENDR
-FOR I, 0, 256, 2
-	INCBIN "intro_e.1bpp", I, 1
-ENDR
+	_0_5_BPP "intro_n.1bpp"
+	_0_5_BPP "intro_e.1bpp"
 .end
 
 Intro2Tiles:
-FOR I, 0, 128, 2
-	INCBIN "intro_n0.1bpp", I, 1
-ENDR
-FOR I, 0, 128, 2
-	INCBIN "intro_d.1bpp", I, 1
-ENDR
-FOR I, 0, 128, 2
-	INCBIN "intro_o.1bpp", I, 1
-ENDR
-FOR I, 0, 64, 2
-	INCBIN "intro_i.1bpp", I, 1
-ENDR
-FOR I, 0, 64, 2
-	INCBIN "intro_t.1bpp", I, 1
-ENDR
+	_0_5_BPP "intro_n0.1bpp"
+	_0_5_BPP "intro_d.1bpp"
+	_0_5_BPP "intro_o.1bpp"
+	_0_5_BPP "intro_i.1bpp"
+	_0_5_BPP "intro_t.1bpp"
 .end
