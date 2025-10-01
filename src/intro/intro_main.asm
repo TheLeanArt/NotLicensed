@@ -318,62 +318,72 @@ ASSERT (ROW_INTRO_TOP & 1)
 
 	call IntroMain             ; Set objects and background/window coordinates
 
-IF DEF(FADEOUT)
+IF DEF(INTRO_FADEOUT)
 
 	ldh a, [hFlags]            ; Load our flags into the A register
 	ld d, a                    ; Store the flags in the D register
 	and FLAGS_GBC | FLAGS_SGB  ; Are we running on GBC/SGB?
 	jr z, .fadeOutDMG          ; If not, proceed to fade out DMG
 	ld a, e                    ; Load the value in E into A
-	sub FADEOUT_START          ; Adjust to start of fadeout
+	sub INTRO_FADEOUT_START    ; Adjust to start of fadeout
 	jr c, .fadeOutDone         ; If not reached, proceed to play sound
 	bit B_FLAGS_GBC, d         ; Are we running on GBC?
 	jr z, .fadeOutSGB          ; If not, proceed to fade out SGB
 
 .fadeOutGBC
+	push de                    ; Save the step counter
 	ld hl, FadeOutLUT          ; Load LUT address into HL
-	call ReadLUT               ; Read color value
-	and 1                      ; Isolate the lower bit
-	add a                      ; Multiply by 2
+	call ReadLUT2              ; Read color values
+	and 2                      ; Isolate the 2nd lowest bit
 	add LOW(rBGPI)             ; Add lower register address byte
 	ld l, a                    ; Load the result into L
 	ld h, HIGH(rBGPI)          ; Load upper register address byte into H
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ld a, BGPI_AUTOINC | 2     ; Start at color 1 and autoincrement
+	ld a, BGPI_AUTOINC         ; Start at color 0 and autoincrement
 	ld [hli], a                ; Set index register and advance to value register
-	ld [hl], c                 ; Set lower byte
-	ld [hl], b                 ; Set upper byte
+	ld [hl], e                 ; Set the background's lower byte
+	ld [hl], d                 ; Set the background's upper byte
+	ld [hl], c                 ; Set the foreground's lower byte
+	ld [hl], b                 ; Set the foreground's upper byte
+	pop de                     ; Restore the step counter
 	jr .fadeOutDone            ; Proceed to play sound
 
 .fadeOutSGB
 	bit 0, a                   ; Is the lower bit set?
 	jr nz, .fadeOutDone        ; If yes, proceed to play sound
-	ld hl, FadeOutSGBLUT       ; Load LUT address into HL
-	call ReadLUT               ; Read color value
-	ld hl, wPacketBuffer + 8   ; Load final buffer address into HL
-	call WriteThreeColorsSGB   ; Write colors 3, 2 and 1
-	ld bc, C_INTRO_BACK_SGB    ; Load background color into BC
-	call WriteColorSGB         ; Write color 0
 	push de                    ; Save the step counter
+	ld hl, FadeOutSGBLUT       ; Load LUT address into HL
+	call ReadLUT2              ; Read color values
+	ld hl, wPacketBuffer + 8   ; Load the foreground's address into HL
+	ld a, b                    ; Load the foreground's upper byte into A
+	ld [hld], a                ; Set and move back
+	ld a, c                    ; Load the foreground's lower byte into A
+	ld [hld], a                ; Set and move back
+	ld l, LOW(wPacketBuffer + 2) ; Load the background's lower address byte into L
+	ld a, d                    ; Load the background's upper byte into A
+	ld [hld], a                ; Set and move back
+	ld a, e                    ; Load the background's lower byte into A
+	ld [hld], a                ; Set and move back
 	call SGB_SendPacket        ; Set SGB palette
 	pop de                     ; Restore the step counter
+	jr .fadeOutDone            ; Proceed to play sound
 
 .fadeOutDMG
 
-IF DEF(FADEOUT_DMG)
+IF DEF(INTRO_FADEOUT_DMG)
 
 	ld a, e                    ; Load the value in E into A
-	cp FADEOUT_START           ; Start fadeout?
+	cp INTRO_FADEOUT_START     ; Start fadeout?
 	jr z, .fade1               ; If true, proceed to set dark palettes
-	cp FADEOUT_MIDDLE          ; Continue fadeout?
+	cp INTRO_FADEOUT_MIDDLE    ; Continue fadeout?
 	jr nz, .fadeOutDone        ; If true, proceed to set light palettes
 
 .fade2
-	ld a, FADEOUT_DMG_P2       ; Set the second palette
+	ld a, INTRO_FADEOUT_DMG_P2 ; Set the second palette
 	jr .fadeCont               ; Proceed to set palettes
 
 .fade1
-	ld a, FADEOUT_DMG_P1       ; Set the first palette
+	ld a, INTRO_FADEOUT_DMG_P1 ; Set the first palette
 
 .fadeCont
 	ldh [rBGP], a              ; Set the background palette
@@ -395,8 +405,8 @@ ENDC
 	bit 7, e                   ; Step 128 reached?
 	jp z, .mainLoop            ; If not, continue to loop
 
-IF DEF(FADEOUT_DMG)
-	ld a, FADEOUT_DMG_P3       ; Set the final palette
+IF DEF(INTRO_FADEOUT_DMG)
+	ld a, INTRO_FADEOUT_DMG_P3 ; Set the final palette
 	ld [rBGP], a               ; Set the background palette
 	ld [rOBP0], a              ; Set the default object palette
 ENDC
@@ -875,7 +885,7 @@ ENDR
 SECTION "IntroInitSGB", ROM0
 IntroInitSGB:
 
-IF DEF(FADEOUT)
+IF DEF(INTRO_FADEOUT)
 
 	ASSERT(SGB_PAL01 == 0 && FLAGS_SGB == 1)
 
@@ -897,54 +907,43 @@ Sleep:
 	ret
 
 
-IF DEF(FADEOUT)
+IF DEF(INTRO_FADEOUT)
 
 SECTION "ReadLUT", ROM0
 ReadLUT:
 	add l                      ; Add lower address byte
 	ld l, a                    ; Load the result into L
 	res 0, l                   ; Clear the lowest bit
-	ld c, [hl]                 ; Load lower byte into C
+	jr ReadLUT2.cont           ; Proceed to read the foreground
+	
+ReadLUT2:
+	add a                      ; Multiply by 2
+	add l                      ; Add lower address byte
+	ld l, a                    ; Load the result into L
+	res 1, l                   ; Clear the 2nd lowest bit
+	ld e, [hl]                 ; Load the background's lower byte into E
 	inc l                      ; Increment lower LUT address byte
-	ld b, [hl]                 ; Load upper byte into B
-	bit B_FLAGS_GBC, d         ; Are we running on GBC?
-	ret
-
-WriteThreeColorsSGB:
-	call WriteColorSGB         ; Write the first color
-	; Fall through
-
-WriteTwoColorsSGB:
-	call WriteColorSGB         ; Write the color before last
-	; Fall through
-
-WriteColorSGB:
-	ld a, b                    ; Load upper byte into A
-	ld [hld], a                ; Set and move back
-	ld a, c                    ; Load lower byte into A
-	ld [hld], a                ; Set and move back
+	ld d, [hl]                 ; Load the background's upper byte into D
+	inc l                      ; Increment lower LUT address byte
+.cont
+	ld c, [hl]                 ; Load the foreground's lower byte into C
+	inc l                      ; Increment lower LUT address byte
+	ld b, [hl]                 ; Load the foreground's upper byte into B
 	ret
 
 
-SECTION "FadeOutLUT", ROMX, ALIGN[1]
-IF C_INTRO_BOTTOM_SGB == C_INTRO_BOTTOM && C_INTRO_BACK_SGB == C_INTRO_BACK
+SECTION "FadeOutLUT", ROM0, ALIGN[2]
+IF C_INTRO_BOTTOM_SGB == C_INTRO_BOTTOM && C_INTRO_BACK_SGB == C_INTRO_BACK && C_INTRO_FADEOUT_SGB == C_INTRO_FADEOUT
 FadeOutSGBLUT:
 ENDC
 FadeOutLUT:
-FOR I, FADEOUT_LENGTH
-	INTER_COLOR C_INTRO_BOTTOM, C_INTRO_BACK, FADEOUT_LENGTH, I
-ENDR
+	FADE_LUT INTRO_FADEOUT, C_INTRO_BACK, C_INTRO_BOTTOM, C_INTRO_FADEOUT
 
+IF C_INTRO_BOTTOM_SGB != C_INTRO_BOTTOM || C_INTRO_BACK_SGB != C_INTRO_BACK || C_INTRO_FADEOUT_SGB != C_INTRO_FADEOUT
 
-IF C_INTRO_BOTTOM_SGB != C_INTRO_BOTTOM || C_INTRO_BACK_SGB != C_INTRO_BACK
-
-SECTION "FadeOutSGBLUT", ROMX, ALIGN[1]
+SECTION "FadeOutSGBLUT", ROM0, ALIGN[2]
 FadeOutSGBLUT:
-DEF FADEOUT_MAX = (FADEOUT_LENGTH - 1)
-FOR I, FADEOUT_LENGTH
-	INTER_COLOR C_INTRO_BOTTOM_SGB, C_INTRO_BACK_SGB, FADEOUT_LENGTH, I
-ENDR
-
+	FADE_LUT INTRO_FADEOUT, C_INTRO_BACK_SGB, C_INTRO_BOTTOM_SGB, C_INTRO_FADEOUT_SGB
 ENDC
 
 

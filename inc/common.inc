@@ -105,6 +105,20 @@ MACRO INTER_COLOR
 	dw {d:_B} << 10 | {d:_G} << 5 | {d:_R}
 ENDM
 
+; @param \1 Prefix
+; @param \2 Background
+; @param \3 Foreground
+; @param \4 Fadeout
+MACRO FADE_LUT
+FOR I, \1_LENGTH
+	INTER_COLOR \2, \4, \1_LENGTH, I
+	INTER_COLOR \3, \4, \1_LENGTH, I
+ENDR
+REPT \1_PADDING
+	dw \4
+ENDR
+ENDM
+
 ; @param \1 Top
 ; @param \2 Bottom
 MACRO GRADIENT_LUT

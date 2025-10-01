@@ -52,7 +52,8 @@ The intro provides numerous customisation hooks via `defs.inc`. Following is a n
 * `INTRO_GRADIENT`: enable background gradient on GBC.
   * `C_INTRO_GRADIENT_TOP`: gradient's top colour.
   * `C_INTRO_GRADIENT_BOTTOM`: gradient's bottom colour.
-* `FADEOUT`: enable fadeout on GBC/SGB.
+* `INTRO_FADEOUT`: enable fadeout on GBC/SGB.
+  * `INTRO_FADEOUT_DMG:` enable fadeout on DMG.
 * `EN_GB`: display _licenced_ instead of _licensed_.
 
 Common colour values are defined in `color.inc`.
