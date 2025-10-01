@@ -338,13 +338,24 @@ IF DEF(INTRO_FADEOUT)
 	add LOW(rBGPI)             ; Add lower register address byte
 	ld l, a                    ; Load the result into L
 	ld h, HIGH(rBGPI)          ; Load upper register address byte into H
-	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld a, BGPI_AUTOINC         ; Start at color 0 and autoincrement
 	ld [hli], a                ; Set index register and advance to value register
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld [hl], e                 ; Set the background's lower byte
 	ld [hl], d                 ; Set the background's upper byte
 	ld [hl], c                 ; Set the foreground's lower byte
 	ld [hl], b                 ; Set the foreground's upper byte
+	dec l                      ; Move back to the index register
+	ld a, BGPI_AUTOINC | 8     ; Start at palette 1 color 0 and autoincrement
+	ld [hli], a                ; Set index register and advance to value register
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ld a, e                    ; Load the background's lower byte
+	ld [hl], a                 ; Set the background's lower byte
+	ldh [hColorLow], a         ; Set the background color's lower byte
+	ld a, d                    ; Load the background's upper byte
+	ld [hl], a                 ; Set the background's upper byte
+	ldh [hColorHigh], a        ; Set the background color's upper byte
+.fadeOutGBCdone
 	pop de                     ; Restore the step counter
 	jr .fadeOutDone            ; Proceed to play sound
 
