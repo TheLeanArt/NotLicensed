@@ -81,3 +81,9 @@ Feel free to use in your project (but consider dropping me a line).
 * CI script adapted from [ISSOtm's contribution](https://github.com/tbsp/simple-gb-asm-examples/pull/2) to _Simple GB ASM Examples_
 * [hUGEDriver](https://github.com/SuperDisk/hUGEDriver/) written by SuperDisk
 * Audio sample adapted from _Wild Pokemon Appear_ by Junichi Masuda
+
+## Thanks
+
+* calc84maniac for the optimisations
+* ISSOtm for great optimisation ideas
+* nitro2k01 and ku🐧 for helping to fix the colour LUTs

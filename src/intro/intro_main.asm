@@ -259,7 +259,8 @@ ENDC
 	xor a                      ; Set A to zero
 	ld [hl], a                 ; Clear any lingering Os
 
-	ld a, COL_INTRO_O          ; Load the base column into A
+	                           ; Optimization courtesy of calc84maniac
+	ld a, COL_INTRO_O + 1      ; Load the base column + 1 into A
 	sub c                      ; Subtract t * 9/4 / 8
 	and TILEMAP_WIDTH - 1      ; Stay within the row
 	or l                       ; Adjust row
@@ -267,17 +268,12 @@ ENDC
 	ld a, b                    ; Load t * 9/4
 	and $07                    ; Isolate tile pair index
 	add a                      ; Multiply by 2
-	or T_INTRO_TOP_O           ; Adjust tile ID
+	or T_INTRO_TOP_O + 1       ; Adjust tile ID
+ASSERT (ROW_INTRO_TOP & 1)
+	ld [hld], a                ; Set right tile and decrement the address
+	set TZCOUNT(TILEMAP_WIDTH), l ; Stay within the row
+	dec a                      ; Decrement tile ID
 	ld [hl], a                 ; Set left tile
-
-	inc a                      ; Increment tile ID
-	ld b, a                    ; Store tile ID in B
-	ld a, l                    ; Load the lower address byte into A
-	inc a                      ; Increment the lower address byte
-	and TILEMAP_WIDTH - 1      ; Stay within the row
-	or ROW_INTRO_TOP * TILEMAP_WIDTH
-	ld l, a                    ; Load the lower address byte into L
-	ld [hl], b                 ; Set right tile
 
 	ld a, e                    ; Load the step counter into A
 	or a                       ; Skip the first step
@@ -409,6 +405,7 @@ IntroMain:
 	ld [hl], a                 ; Set the window's X coordinate
 .cont
 
+	                           ; Optimization courtesy of calc84maniac
 	ld a, e                    ; Load t into A
 	srl a                      ; Divide by 2
 	ld c, a                    ; Store t/2 in C
