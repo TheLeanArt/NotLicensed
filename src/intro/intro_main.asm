@@ -392,8 +392,6 @@ IF DEF(INTRO_FADEOUT)
 	jr .fadeOutDone            ; Proceed to play sound
 
 .fadeOutSGB
-	bit 0, a                   ; Is the lower bit set?
-	jr nz, .fadeOutDone        ; If yes, proceed to play sound
 	ld hl, FadeOutSGBLUT       ; Load LUT address into HL
 	call ReadSGBLUT2           ; Read color values
 	ld hl, wPacketBuffer + 8   ; Load the foreground's address into HL
