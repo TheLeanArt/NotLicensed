@@ -1,18 +1,11 @@
-; Adapted from https://github.com/gb-archive/snek-gbc/blob/main/code/sub.sm83
+; SGB subroutines
 ;
-; Copyright (c) 2023 zlago
+; Copyright (c) 2025 Dmitry Shechtman
 
 include "hardware.inc"
 include "common.inc"
 include "sgb.inc"
 
-
-MACRO SEND_BIT
-	ldh [c], a          ; 5 cycles
-	ld a, $FF           ; end pulse
-	nop
-	ldh [c], a          ; 15 cycles
-ENDM
 
 SECTION "SGB_SendPacket", ROM0
 SGB_Freeze::
@@ -37,45 +30,44 @@ SGB_TrySendPacket::
 	ret nz
 	; Fall through
 
-SGB_SendPacket::
-	ld bc, SGB_PACKET_SIZE << 8 | LOW(rP1)
-	xor a               ; start bit
-	SEND_BIT
 
-.byteLoop
-	ld d, [hl]
-	inc hl
-	ld e, 8
+; Send SGB packet
+;
+; Optimized subroutine by nitro2k01
+; https://github.com/nitro2k01
+;
+; @param HL Packet
+; @param BC Clobbered
+SGB_SendPacket::
+	ld bc, SGB_PACKET_SIZE + 1 ; B = 0, C = SGB packet size + 1
+	xor a                      ; A = 0, CF = 0
+	ldh [rJOYP], a             ; Send start bit
 
 .bitLoop
-	xor a               ; load A with SGB bit
-	rr d                ; fetch next bit
-	ccf                 ; set accumulator in the dumbest way i could come up with
-	adc a
-	inc a
-	swap a
-	nop
-	nop
-	SEND_BIT
+	ld a, JOYP_SGB_FINISH      ; Load idle state
+	ldh [rJOYP], a             ; Send idle state
 
-	dec e
-	jr nz, .bitLoop
-	dec b
-	jr nz, .byteLoop
+.bitCont
+	rr b                       ; Get next bit, plus zero check
+	jr z, .nextByte            ; If byte end reached, proceed to the next byte
+	sbc a                      ; Transfer carry into all bits of A
+	xor JOYP_SGB_ZERO          ; Select the relevant bit, CF = 0
+	ldh [rJOYP], a             ; Send bit
+	jr .bitLoop                ; Continue looping
 
-	REPT 6
-		nop
-	ENDR
+.nextByte
+	dec c                      ; Check length in bytes
+	scf                        ; Set carry to inject sentinel bit
+	jr z, .done                ; If packet end reached, proceed to send stop bit
+	ld a, [hli]                ; Load next byte
+	ld b, a                    ; Load into B
+	jr .bitCont                ; Continue looping
 
-	ld a, $20           ; stop bit
-	SEND_BIT
-
-	REPT 11
-		nop
-	ENDR
-
-	ld a, JOYP_GET_CTRL_PAD
-	ldh [c], a
+.done
+	ld a, JOYP_SGB_ZERO        ; Load stop bit
+	ldh [rJOYP], a             ; Send stop bit
+	sbc a                      ; Reuse the sentinel bit to save 1 byte/cycle loading $FF into A
+	ldh [rJOYP], a             ; Send idle state
 	ret
 
 
