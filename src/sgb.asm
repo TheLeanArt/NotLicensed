@@ -35,7 +35,7 @@ SGB_Unfreeze::
 	jr SGB_SetPalettes01.cont  ; Proceed to set packet header
 
 SGB_SetColors01::
-	ld hl, wPacketBuffer + A_SGB_PAL01_PAL0_COLOR_3 + 1
+	ld hl, wPacketBuffer + A_SGB_PAL01_PAL_0_COLOR_3 + 1
 	ld [hld], a                ; Set and move back
 	ld a, b                    ; Load the foreground's lower byte into A
 	ld [hld], a                ; Set and move back
