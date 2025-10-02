@@ -106,6 +106,15 @@ MACRO INTER_COLOR
 ENDM
 
 ; @param \1 Prefix
+; @param \2 Init background
+; @param \3 Final background
+MACRO FADEIN_LUT
+FOR I, \1_LENGTH
+	INTER_COLOR \2, \3, \1_LENGTH, I
+ENDR
+ENDM
+
+; @param \1 Prefix
 ; @param \2 Background
 ; @param \3 Foreground
 ; @param \4 Fadeout

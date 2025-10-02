@@ -65,8 +65,40 @@ Intro::
 	jr .cont                   ; Proceed to initialize objects
 
 .trySGB
-	ld hl, PaletteSGB          ; Load the palette address into the HL register
-	call SGB_TrySendPacket     ; Try setting SGB palettes
+	bit B_FLAGS_SGB, a         ; Are we running on SGB?
+	jr z, .cont                ; If not, proceed to initialize objects
+
+	ld hl, wPacketBuffer + SGB_PACKET_SIZE - 1
+.clearLoop
+	xor a                      ; Set A to zero
+	ld [hld], a                ; Set and move back
+	or l                       ; Buffer start reached?
+	jr nz, .clearLoop          ; If not, continue to loop
+
+ASSERT(SGB_PAL01 == 0)
+
+	inc a                      ; Set A to one
+
+IF DEF(INTRO_FADEIN_SGB)
+
+ASSERT(C_INTRO_INIT_SGB == 0)  ; All blacks
+
+	ld [hl], a                 ; Set packet header
+
+ELSE
+
+ASSERT(C_INTRO_BOTTOM_SGB == 0)  ; Mostly blacks
+
+	ld [hli], a                  ; Set packet header and advance
+	inc l                        ; Advance to the background's upper byte
+	ld a, HIGH(C_INTRO_BACK_SGB) ; Load the background's upper byte into A
+	ld [hld], a                  ; Set and move back
+	ld a, LOW(C_INTRO_BACK_SGB)  ; Load the background's lower byte into A
+	ld [hld], a                  ; Set and move back
+
+ENDC
+
+	call SGB_SendPacket        ; Set SGB palette
 
 .cont
 	call InitTop               ; Initialize our objects
@@ -884,33 +916,43 @@ ENDC
 
 	ret
 
-PaletteSGB:
-	db SGB_PAL01 | $01
-	dw C_INTRO_BACK_SGB
-REPT 6
-	dw C_INTRO_BOTTOM_SGB
-ENDR
-	db 0
-
 
 SECTION "IntroInitSGB", ROM0
 IntroInitSGB:
 
-IF DEF(INTRO_FADEOUT)
+	ld e, INTRO_SGB_DELAY      ; ~1 sec delay to make up for the SGB bootup animation
 
-	ASSERT(SGB_PAL01 == 0 && FLAGS_SGB == 1)
+IF DEF(INTRO_FADEIN_SGB)
 
-	ld hl, wPacketBuffer       ; Load packet buffer address into HL
-	ld [hli], a                ; Set header and advance
-	xor a                      ; Set A to zero
-.clearLoop
-	ld [hli], a                ; Set and advance
-	bit 4, l                   ; Buffer length reached?
-	jr z, .clearLoop           ; If not, continue to loop
+	call Sleep                 ; Sleep
+
+.fadeInLoop
+	rst WaitVBlank             ; Wait for the next VBlank
+	ld a, e                    ; Load the value in E into A
+	push de                    ; Save the step counter
+	ld hl, FadeInSGBLUT        ; Load LUT address into HL
+	call ReadLUT               ; Read color
+	ld hl, wPacketBuffer + 2   ; Load the background's address into HL
+	ld a, b                    ; Load the background's upper byte into A
+	ld [hld], a                ; Set and move back
+	ld a, c                    ; Load the background's lower byte into A
+	ld [hld], a                ; Set and move back
+	call SGB_SendPacket        ; Set SGB palette
+	pop de                     ; Restore the step counter
+	inc e                      ; Increment the step counter
+
+ASSERT(INTRO_FADEIN_SGB_LENGTH == 1 << TZCOUNT(INTRO_FADEIN_SGB_LENGTH))
+
+	bit TZCOUNT(INTRO_FADEIN_SGB_LENGTH) + 1, e
+	jr z, .fadeInLoop          ; If length not reached, continue to loop
+	ret
+
+ELSE
+
+	; Fall through
 
 ENDC
 
-	ld e, INTRO_SGB_DELAY      ; ~1 sec delay to make up for the SGB bootup animation
 Sleep:
 	rst WaitVBlank             ; Wait for the next VBlank
 	dec e                      ; Decrement the counter
@@ -918,7 +960,7 @@ Sleep:
 	ret
 
 
-IF DEF(INTRO_FADEOUT)
+IF DEF(INTRO_FADEIN_SGB) || DEF(INTRO_FADEOUT)
 
 SECTION "ReadLUT", ROM0
 ReadLUT:
@@ -942,6 +984,19 @@ ReadLUT2:
 	ld b, [hl]                 ; Load the foreground's upper byte into B
 	ret
 
+ENDC
+
+
+IF DEF(INTRO_FADEIN_SGB)
+
+SECTION "FadeInSGBLUT", ROM0, ALIGN[1]
+FadeInSGBLUT:
+	FADEIN_LUT INTRO_FADEIN_SGB, C_INTRO_INIT_SGB, C_INTRO_BACK_SGB
+
+ENDC
+
+
+IF DEF(INTRO_FADEOUT)
 
 SECTION "FadeOutLUT", ROM0, ALIGN[2]
 IF C_INTRO_BOTTOM_SGB == C_INTRO_BOTTOM && C_INTRO_BACK_SGB == C_INTRO_BACK && C_INTRO_FADEOUT_SGB == C_INTRO_FADEOUT
@@ -955,14 +1010,15 @@ IF C_INTRO_BOTTOM_SGB != C_INTRO_BOTTOM || C_INTRO_BACK_SGB != C_INTRO_BACK || C
 SECTION "FadeOutSGBLUT", ROM0, ALIGN[2]
 FadeOutSGBLUT:
 	FADE_LUT INTRO_FADEOUT, C_INTRO_BACK_SGB, C_INTRO_BOTTOM_SGB, C_INTRO_FADEOUT_SGB
+
+ENDC
+
 ENDC
 
 
 SECTION "SGB Packet Buffer", WRAM0, ALIGN[8]
 wPacketBuffer:
 	ds SGB_PACKET_SIZE
-
-ENDC
 
 
 IF DEF(INTRO_GRADIENT)
