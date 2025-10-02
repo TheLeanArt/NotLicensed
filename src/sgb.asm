@@ -8,26 +8,53 @@ include "sgb.inc"
 
 
 SECTION "SGB_SendPacket", ROM0
-SGB_Freeze::
-	ld hl, FreezeSGB
-	jr SGB_SendPacket
-
 SGB_TryFreeze::
-	ld hl, FreezeSGB
-	jr SGB_TrySendPacket
-
-SGB_Unfreeze::
-	ld hl, UnfreezeSGB
-	jr SGB_SendPacket
-
-SGB_TryUnfreeze::
-	ld hl, UnfreezeSGB
+	ldh a, [hFlags]            ; Load our flags into the A register
+	and FLAGS_SGB              ; Are we running on SGB?
+	ret z                      ; If not, return
 	; Fall through
 
-SGB_TrySendPacket::
-	ldh a, [hFlags]
-	cp FLAGS_SGB
-	ret nz
+SGB_Freeze::
+	ld a, SGB_MASK_EN_MASK_FREEZE
+	jr SGB_Unfreeze.cont
+
+SGB_TryUnfreeze::
+	ldh a, [hFlags]            ; Load our flags into the A register
+	and FLAGS_SGB              ; Are we running on SGB?
+	ret z                      ; If not, return
+	; Fall through
+
+SGB_Unfreeze::
+	ld a, SGB_MASK_EN_MASK_CANCEL
+	; Fall through
+
+.cont
+	ld hl, wPacketBuffer + A_SGB_MASK_EN_MASK
+	ld [hld], a                ; Set and move back
+	ld a, SGB_MASK_EN | $01    ; Load packet header into A
+	jr SGB_SetPalettes01.cont  ; Proceed to set packet header
+
+SGB_SetColors01::
+	ld hl, wPacketBuffer + A_SGB_PAL01_PAL0_COLOR_3 + 1
+	ld [hld], a                ; Set and move back
+	ld a, b                    ; Load the foreground's lower byte into A
+	ld [hld], a                ; Set and move back
+	ld a, c                    ; Load the background's upper byte into A
+	; Fall through
+
+SGB_SetBackground01::
+	ld hl, wPacketBuffer + A_SGB_PAL01_COLOR_0 + 1
+	ld [hld], a                ; Set and move back
+	ld a, d                    ; Load the background's lower byte into A
+	ld [hld], a                ; Set and move back
+	; Fall through
+
+SGB_SetPalettes01::
+	ld a, SGB_PAL01 | $01	   ; Load packet header into A
+	; Fall through
+
+.cont
+	ld [hl], a                 ; Set packet header
 	; Fall through
 
 
@@ -71,15 +98,6 @@ SGB_SendPacket::
 	ret
 
 
-SECTION "FreezeSGB", ROM0
-FreezeSGB:
-	db SGB_MASK_EN | $01
-	db SGB_MASK_EN_MASK_FREEZE
-	ds 14
-
-
-SECTION "UnfreezeSGB", ROM0
-UnfreezeSGB:
-	db SGB_MASK_EN | $01
-	db SGB_MASK_EN_MASK_CANCEL
-	ds 14
+SECTION "SGB Packet Buffer", WRAM0, ALIGN[8]
+wPacketBuffer::
+	ds SGB_PACKET_SIZE

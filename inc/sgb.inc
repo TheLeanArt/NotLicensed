@@ -63,6 +63,19 @@ def SGB_STUB6                   equ $1F << S_SGB_COMMAND
 
 
 ;******************************************************************************
+; SGB_PAL01 Packet Indices
+;******************************************************************************
+
+def A_SGB_PAL01_COLOR_0         equ $01
+def A_SGB_PAL01_PAL0_COLOR_1    equ $03
+def A_SGB_PAL01_PAL0_COLOR_2    equ $05
+def A_SGB_PAL01_PAL0_COLOR_3    equ $07
+def A_SGB_PAL01_PAL1_COLOR_1    equ $09
+def A_SGB_PAL01_PAL1_COLOR_2    equ $0B
+def A_SGB_PAL01_PAL1_COLOR_3    equ $0D
+
+
+;******************************************************************************
 ; SGB_SOUND Packet Indices
 ;******************************************************************************
 

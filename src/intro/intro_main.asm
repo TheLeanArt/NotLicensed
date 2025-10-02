@@ -75,30 +75,17 @@ Intro::
 	or l                       ; Buffer start reached?
 	jr nz, .clearLoop          ; If not, continue to loop
 
-ASSERT(SGB_PAL01 == 0)
+IF !DEF(INTRO_FADEIN_SGB)
 
-	inc a                      ; Set A to one
-
-IF DEF(INTRO_FADEIN_SGB)
-
-ASSERT(C_INTRO_INIT_SGB == 0)  ; All blacks
-
-	ld [hl], a                 ; Set packet header
+	ld a, HIGH(C_INTRO_BACK_SGB) ; Load the background's upper byte into A
+	ld d, LOW(C_INTRO_BACK_SGB)  ; Load the background's lower byte into A
+	call SGB_SetBackground01     ; Set SGB background
 
 ELSE
 
-ASSERT(C_INTRO_BOTTOM_SGB == 0)  ; Mostly blacks
-
-	ld [hli], a                  ; Set packet header and advance
-	inc l                        ; Advance to the background's upper byte
-	ld a, HIGH(C_INTRO_BACK_SGB) ; Load the background's upper byte into A
-	ld [hld], a                  ; Set and move back
-	ld a, LOW(C_INTRO_BACK_SGB)  ; Load the background's lower byte into A
-	ld [hld], a                  ; Set and move back
+	call SGB_SetPalettes01     ; Set SGB palette
 
 ENDC
-
-	call SGB_SendPacket        ; Set SGB palette
 
 .cont
 	call InitTop               ; Initialize our objects
@@ -394,16 +381,7 @@ IF DEF(INTRO_FADEOUT)
 .fadeOutSGB
 	ld hl, FadeOutSGBLUT       ; Load LUT address into HL
 	call ReadSGBLUT2           ; Read color values
-	ld hl, wPacketBuffer + 8   ; Load the foreground's address into HL
-	ld [hld], a                ; Set and move back
-	ld a, b                    ; Load the foreground's lower byte into A
-	ld [hld], a                ; Set and move back
-	ld l, LOW(wPacketBuffer + 2) ; Load the background's lower address byte into L
-	ld a, c                    ; Load the background's upper byte into A
-	ld [hld], a                ; Set and move back
-	ld a, d                    ; Load the background's lower byte into A
-	ld [hld], a                ; Set and move back
-	call SGB_SendPacket        ; Set SGB palette
+	call SGB_SetColors01       ; Set SGB colors
 	jr .fadeOutDone            ; Proceed to play sound
 
 .fadeOutDMG
@@ -926,11 +904,7 @@ IF DEF(INTRO_FADEIN_SGB)
 	ld a, e                    ; Load the value in E into A
 	ld hl, FadeInSGBLUT        ; Load LUT address into HL
 	call ReadLUT               ; Read color
-	ld hl, wPacketBuffer + 2   ; Load the background's address into HL
-	ld [hld], a                ; Set and move back
-	ld a, b                    ; Load the background's lower byte into A
-	ld [hld], a                ; Set and move back
-	call SGB_SendPacket        ; Set SGB palette
+	call SGB_SetBackground01   ; Set SGB background
 	inc e                      ; Increment the step counter
 
 ASSERT(INTRO_FADEIN_SGB_LENGTH == 1 << TZCOUNT(INTRO_FADEIN_SGB_LENGTH))
@@ -952,14 +926,22 @@ Sleep:
 	ret
 
 
-IF DEF(INTRO_FADEIN_SGB) || DEF(INTRO_FADEOUT)
+IF DEF(INTRO_FADEIN_SGB)
 
 SECTION "ReadLUT", ROM0
 ReadLUT:
 	add l                      ; Add lower address byte
 	ld l, a                    ; Load the result into L
 	res 0, l                   ; Clear the lowest bit
-	jr ReadSGBLUT2.cont        ; Proceed to read the values
+	ld d, [hl]                 ; Load the foreground's lower byte into D
+	inc l                      ; Increment lower LUT address byte
+	ld a, [hl]                 ; Load the foreground's upper byte into A
+	ret
+
+ENDC
+
+
+IF DEF(INTRO_FADEOUT)
 
 ReadSGBLUT2:
 	add a                      ; Multiply by 2
@@ -970,7 +952,6 @@ ReadSGBLUT2:
 	inc l                      ; Increment lower LUT address byte
 	ld c, [hl]                 ; Load the background's upper byte into C
 	inc l                      ; Increment lower LUT address byte
-.cont
 	ld b, [hl]                 ; Load the foreground's lower byte into B
 	inc l                      ; Increment lower LUT address byte
 	ld a, [hl]                 ; Load the foreground's upper byte into A
@@ -1026,11 +1007,6 @@ FadeOutSGBLUT:
 ENDC
 
 ENDC
-
-
-SECTION "SGB Packet Buffer", WRAM0, ALIGN[8]
-wPacketBuffer:
-	ds SGB_PACKET_SIZE
 
 
 IF DEF(INTRO_GRADIENT)
