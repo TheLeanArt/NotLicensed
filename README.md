@@ -85,8 +85,8 @@ Feel free to use in your project (but consider dropping me a line).
 
 ## Thanks
 
-* nitro2k01 for the optimisations and for helping to fix the colour LUTs
-* calc84maniac for the optimisations
+* [nitro2k01](https://github.com/nitro2k01) for the optimisations and for helping to fix the colour LUTs
+* [calc84maniac](https://github.com/calc84maniac) for the optimisations
 * ku🐧 for helping to fix the colour LUTs
-* ISSOtm for great optimisation ideas
-* Rangi42 for her endless patience
+* [ISSOtm](https://codeberg.org/ISSOtm) for great optimisation ideas
+* [Rangi42](https://github.com/Rangi42) for her endless patience
