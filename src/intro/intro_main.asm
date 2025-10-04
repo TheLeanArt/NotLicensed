@@ -42,6 +42,56 @@ ELSE
 ENDC
 ENDM
 
+MACRO INIT_COLOR_BACK
+IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
+	IF LOW(C_INTRO_BACK) == HIGH(rBGPI)
+		ld d, h
+	ELSE
+		ld d, LOW(C_INTRO_BACK)
+	ENDC
+ELSE
+	ld de, C_INTRO_BACK
+ENDC
+ENDM
+
+MACRO INIT_COLOR
+IF LOW(\1) != LOW(\2) && HIGH(\1) != HIGH(\2) && HIGH(\1) != LOW(\1)
+	ld bc, \1
+ELIF LOW(\1) != LOW(\2) && HIGH(\1) != LOW(\1)
+	ld c, LOW(\1)
+ELIF HIGH(\1) != HIGH(\2) && HIGH(\1) != LOW(\1)
+	ld b, HIGH(\1)
+ENDC
+ENDM
+
+MACRO SET_COLOR_BACK
+IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
+	ld [hl], d
+ELSE
+	ld [hl], e
+ENDC
+	ld [hl], d
+ENDM
+
+MACRO SET_COLOR
+IF LOW(\1) == HIGH(\1)
+	ld [hl], b
+ELSE
+	ld [hl], c
+ENDC
+	ld [hl], b
+ENDM
+
+MACRO SET_PALETTE
+	SET_COLOR_BACK
+	INIT_COLOR \2, \1
+	SET_COLOR \2, \1
+	INIT_COLOR \3, \2
+	SET_COLOR \3, \2
+	INIT_COLOR \4, \3
+	SET_COLOR \4, \3
+ENDM
+
 
 SECTION FRAGMENT "Intro", ROM0
 Intro:
@@ -139,7 +189,14 @@ IF DEF(INTRO_FADEIN_GBC)
 	ld a, d                    ; Load the background's upper byte into A
 	ldh [hColorHigh], a        ; Set the background color's upper byte
 	ld hl, rBGPI               ; Load the index register address into HL
-	call SetColors2            ; Write color values
+	ld a, BGPI_AUTOINC         ; Start at color 0 and autoincrement
+	ld [hli], a                ; Set index register and advance to value register
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ldh a, [hColorLow]         ; Load the background's lower byte into A
+	ld [hl], a                 ; Set the background's lower byte
+	ld [hl], d                 ; Set the background's upper byte
+	ld [hl], c                 ; Set the foreground's lower byte
+	ld [hl], b                 ; Set the foreground's upper byte
 	inc e                      ; Increment the step counter
 ASSERT(INTRO_FADEIN_GBC_LENGTH == 1 << TZCOUNT(INTRO_FADEIN_GBC_LENGTH))
 	bit TZCOUNT(INTRO_FADEIN_GBC_LENGTH) + 1, e
@@ -337,23 +394,7 @@ IF DEF(INTRO_FADEOUT)
 .fadeOutGBC
 	ld hl, FadeOutLUT          ; Load LUT address into HL
 	call ReadLUT2              ; Read color values
-	ldh [hColorLow], a         ; Set the background color's lower byte
-	ld a, d                    ; Load the background's upper byte into A
-	ldh [hColorHigh], a        ; Set the background color's upper byte
-	ld a, e                    ; Load the step counter into A
-	add a                      ; Multiply by 2
-	and 2                      ; Isolate the 2nd lowest bit
-	ld hl, rBGPI               ; Load the index register address into HL
-	add l                      ; Add lower register address byte
-	ld l, a                    ; Load the result into L
-	call SetColors2            ; Write color values
-	ld c, a                    ; Store the background's lower byte in C
-	dec l                      ; Move back to the index register
-	ld a, BGPI_AUTOINC | 8     ; Start at palette 1 color 0 and autoincrement
-	ld [hli], a                ; Set index register and advance to value register
-	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ld [hl], c                 ; Set the background's lower byte
-	ld [hl], d                 ; Set the background's upper byte
+	call FadeOutGBC            ; Set color values
 	jr .fadeOutDone            ; Proceed to play sound
 
 .fadeOutSGB
@@ -675,22 +716,49 @@ Color8:
 	call SetByAttrs            ; Set attributes
 
 	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_TILEID
-	ld a, T_INTRO_NOT_2
+	ld a, T_INTRO_TOP_0_2
 	ld [hl], a
-	ld l, OBJ_INTRO_TOP_1 * OBJ_SIZE + OAMA_TILEID
-	inc a
-	ld [hl], a
-	ld l, OBJ_INTRO_TOP_2 * OBJ_SIZE + OAMA_TILEID
-	ld a, T_INTRO_TOP_2_2
-	ld [hli], a
-	ld a, 1
-	ld [hl], a
-FOR I, 3, INTRO_TOP_COUNT
-	ld l, OBJ_INTRO_TOP_{d:I} * OBJ_SIZE + OAMA_FLAGS
-	ld [hl], a
-	inc a
-ENDR
 
+	ld l, OBJ_INTRO_TOP_1 * OBJ_SIZE + OAMA_FLAGS
+	ld [hl], b
+
+	ld l, OBJ_INTRO_TOP_2 * OBJ_SIZE + OAMA_TILEID
+	inc a
+	ld [hli], a
+	ld [hl], b
+
+	ld l, OBJ_INTRO_TOP_3 * OBJ_SIZE + OAMA_TILEID
+	inc a
+	ld [hli], a
+	ld [hl], b
+
+	ld l, OBJ_INTRO_TOP_4 * OBJ_SIZE + OAMA_TILEID
+	inc a
+	ld [hli], a
+	inc b
+	ld [hl], b
+
+	ld l, OBJ_INTRO_TOP_5 * OBJ_SIZE + OAMA_TILEID
+	inc a
+	ld [hli], a
+	ld [hl], b
+
+	ld l, OBJ_INTRO_TOP_6 * OBJ_SIZE + OAMA_FLAGS
+	ld [hl], b
+
+	ld l, OBJ_INTRO_TOP_7 * OBJ_SIZE + OAMA_TILEID
+	ld a, T_INTRO_TOP_7_2
+	ld [hli], a
+	inc b
+	ld [hl], b
+
+	ld l, OBJ_INTRO_TOP_8 * OBJ_SIZE + OAMA_TILEID
+	ld a, T_INTRO_TOP_8_2
+	ld [hli], a
+	ld [hl], b
+
+	ld l, OBJ_INTRO_TOP_9 * OBJ_SIZE + OAMA_FLAGS
+	ld [hl], b
 	ret
 
 ENDC
@@ -724,141 +792,35 @@ SetByAttrs::
 	ldh [rVBK], a              ; Switch the VRAM bank back to tile IDs
 	ret
 
+
+SECTION "SetPalette", ROM0
 SetPalettes::
 	ld hl, rBGPI
 	call SetPalette
+	inc l
 
 IF DEF(COLOR8)
-
-FOR I, 2, INTRO_TOP_COUNT
-	ld a, OBPI_AUTOINC | (I - 2) << 3 | 2
+	ld a, OBPI_AUTOINC | 4
 	ld [hli], a
-IF I == 2
-IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
-	IF C_INTRO_BOTTOM
-		ld a, LOW(C_INTRO_BOTTOM)
-	ELSE
-		xor a
-	ENDC
-	ld [hl], a
-	ld [hl], a
-ELSE
-	ld bc, C_INTRO_BOTTOM
-	ld [hl], c
-	ld [hl], b
-ENDC
-	ld bc, C_INTRO_TOP_0
-	ld [hl], c
-	ld [hl], b
-	ld bc, C_INTRO_TOP_1
-ELSE
-DEF _ = (I - 1)
-IF HIGH(C_INTRO_TOP_{d:I}) == HIGH(C_INTRO_TOP_{d:_})
-	ld c, LOW(C_INTRO_TOP_{d:I})
-ELIF LOW(C_INTRO_TOP_{d:I}) == LOW(C_INTRO_TOP_{d:_})
-	ld b, HIGH(C_INTRO_TOP_{d:I})
-ELSE
-	ld bc, C_INTRO_TOP_{d:I}
-ENDC
-ENDC
-	ld [hl], c
-	ld [hl], b
-IF I == 3
-	ld bc, C_INTRO_TOP_2
-	ld [hl], c
-	ld [hl], b
-ENDC
-	dec l
-ENDR
+	INIT_COLOR C_INTRO_TOP_0, 0
+	SET_COLOR C_INTRO_TOP_0, 0
+	INIT_COLOR C_INTRO_BOTTOM, C_INTRO_TOP_0
+	SET_COLOR C_INTRO_BOTTOM, C_INTRO_TOP_0
+
+	SET_PALETTE C_INTRO_BOTTOM, C_INTRO_TOP_3, C_INTRO_TOP_2, C_INTRO_TOP_1
+	SET_PALETTE C_INTRO_TOP_1, C_INTRO_TOP_4, C_INTRO_TOP_5, C_INTRO_TOP_6
+	SET_PALETTE C_INTRO_TOP_6, C_INTRO_TOP_7, C_INTRO_TOP_8, C_INTRO_TOP_9
 	ret
-
 ELSE
-
 	; Fall through
-
 ENDC
 
 SetPalette:
 	ld a, BGPI_AUTOINC
 	ld [hli], a
-
-IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
-	ld a, LOW(C_INTRO_BACK)
-	ld [hl], a
-	ld [hl], a
-ELSE
-	ld bc, C_INTRO_BACK
-	ld [hl], c
-	ld [hl], b
-ENDC
-
-IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
-	IF C_INTRO_BOTTOM
-		ld a, LOW(C_INTRO_BOTTOM)
-	ELSE
-		xor a
-	ENDC
-	ld [hl], a
-	ld [hl], a
-ELSE
-	ld bc, C_INTRO_BOTTOM
-	ld [hl], c
-	ld [hl], b
-ENDC
-
-REPT 4
-	ld [hl], a
-ENDR
-
-IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
-	ld a, LOW(C_INTRO_BACK)
-	ld [hl], a
-	ld [hl], a
-ELSE
-	ld bc, C_INTRO_BACK
-	ld [hl], c
-	ld [hl], b
-ENDC
-
-IF LOW(C_INTRO_BY1) == HIGH(C_INTRO_BY1)
-	ld a, LOW(C_INTRO_BY1)
-	ld [hl], a
-	ld [hl], a
-ELSE
-	ld bc, C_INTRO_BY1
-	ld [hl], c
-	ld [hl], b
-ENDC
-
-IF LOW(C_INTRO_BY2) == HIGH(C_INTRO_BY2)
-	IF C_INTRO_BY2 != C_INTRO_BY1
-		ld a, LOW(C_INTRO_BY2)
-	ENDC
-	ld [hl], a
-	ld [hl], a
-ELSE
-	IF C_INTRO_BY2 != C_INTRO_BY1
-		ld bc, C_INTRO_BY2
-	ENDC
-	ld [hl], c
-	ld [hl], b
-ENDC
-
-IF LOW(C_INTRO_TOP_O) == HIGH(C_INTRO_TOP_O)
-	IF C_INTRO_TOP_O != C_INTRO_BY2
-		ld a, LOW(C_INTRO_TOP_O)
-	ENDC
-	ld [hl], a
-	ld [hli], a
-ELSE
-	IF C_INTRO_TOP_O != C_INTRO_BY2
-		ld bc, C_INTRO_TOP_O
-	ENDC
-	ld [hl], c
-	ld [hl], b
-	inc l
-ENDC
-
+	INIT_COLOR_BACK
+	SET_PALETTE C_INTRO_BACK, C_INTRO_BOTTOM, C_INTRO_BOTTOM, C_INTRO_BOTTOM, C_INTRO_BOTTOM
+	SET_PALETTE C_INTRO_BOTTOM, C_INTRO_BY1, C_INTRO_BY2, C_INTRO_TOP_O
 	ret
 
 
@@ -949,19 +911,6 @@ ReadLUT2:
 	ld b, [hl]                 ; Load the foreground's upper byte into B
 	ret
 
-
-SECTION "SetColors2", ROM0
-SetColors2:
-	ld a, BGPI_AUTOINC         ; Start at color 0 and autoincrement
-	ld [hli], a                ; Set index register and advance to value register
-	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ldh a, [hColorLow]         ; Load the background's lower byte into A
-	ld [hl], a                 ; Set the background's lower byte
-	ld [hl], d                 ; Set the background's upper byte
-	ld [hl], c                 ; Set the foreground's lower byte
-	ld [hl], b                 ; Set the foreground's upper byte
-	ret
-
 ENDC
 
 
@@ -984,6 +933,36 @@ ENDC
 
 
 IF DEF(INTRO_FADEOUT)
+
+SECTION "FadeOutGBC", ROM0
+FadeOutGBC:
+	ldh [hColorLow], a         ; Set the background color's lower byte
+	ld a, d                    ; Load the background's upper byte into A
+	ldh [hColorHigh], a        ; Set the background color's upper byte
+	ld a, e                    ; Load the step counter into A
+	add a                      ; Multiply by 2
+	and 2                      ; Isolate the 2nd lowest bit
+	ld hl, rBGPI               ; Load the index register address into HL
+	add l                      ; Add lower register address byte
+	ld l, a                    ; Load the result into L
+	ld a, BGPI_AUTOINC         ; Start at color 0 and autoincrement
+	ld [hli], a                ; Set index register and advance to value register
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	call SetBackgroundGBC      ; Set background color
+	dec l                      ; Go back to the index register
+	ld a, BGPI_AUTOINC | 6     ; Start at color 3 and autoincrement
+	ld [hli], a                ; Set index register and advance to value register
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ld [hl], c                 ; Set the foreground's lower byte
+	ld [hl], b                 ; Set the foreground's upper byte
+	; Fall through
+
+SetBackgroundGBC:
+	ldh a, [hColorLow]         ; Load the background's lower byte into A
+	ld [hl], a                 ; Set the background's lower byte
+	ld [hl], d                 ; Set the background's upper byte
+	ret
+
 
 SECTION "FadeOutLUT", ROM0, ALIGN[2]
 IF C_INTRO_BOTTOM_SGB == C_INTRO_BOTTOM && C_INTRO_BACK_SGB == C_INTRO_BACK && C_INTRO_FADEOUT_SGB == C_INTRO_FADEOUT

@@ -40,14 +40,7 @@ ENDM
 MACRO COPY_1BPP_SAFE
 ASSERT(!HIGH(\1Tiles.end - \1Tiles))
 	ld b, \1Tiles.end - \1Tiles
-.loop\@
-	rst WaitVRAM        ; Wait for VRAM to become accessible
-	ld a, [de]          ; Load a byte from the address DE points to into the A register
-	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
-	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
-	inc de              ; Increment the source pointer in DE
-	dec b               ; Decrement the inner loop counter
-	jr nz, .loop\@      ; Stop if B is zero, otherwise keep looping
+	call Copy1bppSafe
 ENDM
 
 ; @param \1 Tiles prefix
