@@ -60,39 +60,11 @@ SECTION FRAGMENT "Intro", ROM0
 Intro::
 	ldh a, [hFlags]            ; Load our flags into the A register
 	bit B_FLAGS_GBC, a         ; Are we running on GBC?
-	jr z, .trySGB              ; If not, proceed to try setting SGB palettes
-	call SetPalettes           ; Set GBC palettes
-	jr .cont                   ; Proceed to initialize objects
+	call nz, SetPalettes       ; If yes, set SGB palettes
 
-.trySGB
-	bit B_FLAGS_SGB, a         ; Are we running on SGB?
-	jr z, .cont                ; If not, proceed to initialize objects
-
-	ld hl, wPacketBuffer + SGB_PACKET_SIZE - 1
-.clearLoop
-	xor a                      ; Set A to zero
-	ld [hld], a                ; Set and move back
-	or l                       ; Buffer start reached?
-	jr nz, .clearLoop          ; If not, continue to loop
-
-IF !DEF(INTRO_FADEIN_SGB)
-
-	ld a, HIGH(C_INTRO_BACK_SGB) ; Load the background's upper byte into A
-	ld d, LOW(C_INTRO_BACK_SGB)  ; Load the background's lower byte into A
-	call SGB_SetBackground01     ; Set SGB background
-
-ELSE
-
-	call SGB_SetPalettes01     ; Set SGB palette
-
-ENDC
-
-.cont
 	call InitTop               ; Initialize our objects
 	call ClearOAM              ; Clear the remaining shadow OAM
 	call CopyIntro             ; Copy our tiles
-
-	call SGB_TryFreeze         ; Freeze SGB display
 
 	INIT_VRAM_HL LOGO          ; Load the background logo address into the HL register
 	call ClearLogo             ; Clear the logo from the background
@@ -164,8 +136,6 @@ ENDC
 
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_WIN_ON | LCDC_WIN_9C00
 	ldh [rLCDC], a             ; Enable and configure the LCD
-
-	call SGB_TryUnfreeze       ; Unfreeze SGB display
 
 IF DEF(INTRO_SONG)
 	ld hl, INTRO_SONG          ; Load the song address into the HL register
@@ -369,18 +339,18 @@ IF DEF(INTRO_FADEOUT)
 	ld [hl], d                 ; Set the background's upper byte
 	ld [hl], c                 ; Set the foreground's lower byte
 	ld [hl], b                 ; Set the foreground's upper byte
+	ld c, a                    ; Store the background's lower byte in C
 	dec l                      ; Move back to the index register
 	ld a, BGPI_AUTOINC | 8     ; Start at palette 1 color 0 and autoincrement
 	ld [hli], a                ; Set index register and advance to value register
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ldh a, [hColorLow]         ; Load the background's lower byte into A
-	ld [hl], a                 ; Set the background's lower byte
+	ld [hl], c                 ; Set the background's lower byte
 	ld [hl], d                 ; Set the background's upper byte
 	jr .fadeOutDone            ; Proceed to play sound
 
 .fadeOutSGB
 	ld hl, FadeOutSGBLUT       ; Load LUT address into HL
-	call ReadSGBLUT2           ; Read color values
+	call ReadLUT2              ; Read color values
 	call SGB_SetColors01       ; Set SGB colors
 	jr .fadeOutDone            ; Proceed to play sound
 
@@ -893,32 +863,49 @@ ENDC
 SECTION "IntroInitSGB", ROM0
 IntroInitSGB:
 
-	ld e, INTRO_SGB_DELAY      ; ~1 sec delay to make up for the SGB bootup animation
+	ld hl, wPacketBuffer + SGB_PACKET_SIZE - 1
+.clearLoop
+	xor a                      ; Set A to zero
+	ld [hld], a                ; Set and move back
+	or l                       ; Buffer start reached?
+	jr nz, .clearLoop          ; If not, continue to loop
 
-IF DEF(INTRO_FADEIN_SGB)
+IF !DEF(INTRO_FADEIN_SGB)
 
-	call Sleep                 ; Sleep
-
-.fadeInLoop
-	rst WaitVBlank             ; Wait for the next VBlank
-	ld a, e                    ; Load the value in E into A
-	ld hl, FadeInSGBLUT        ; Load LUT address into HL
-	call ReadLUT               ; Read color
-	call SGB_SetBackground01   ; Set SGB background
-	inc e                      ; Increment the step counter
-
-ASSERT(INTRO_FADEIN_SGB_LENGTH == 1 << TZCOUNT(INTRO_FADEIN_SGB_LENGTH))
-
-	bit TZCOUNT(INTRO_FADEIN_SGB_LENGTH) + 1, e
-	jr z, .fadeInLoop          ; If length not reached, continue to loop
-	ret
-
+	ld a, HIGH(C_INTRO_BACK_SGB) ; Load the background's upper byte into A
+IF LOW(C_INTRO_BACK_SGB) == HIGH(C_INTRO_BACK_SGB)
+	ld d, a                      ; Load the background's lower byte into D
 ELSE
-
-	; Fall through
+	ld d, LOW(C_INTRO_BACK_SGB)  ; Load the background's lower byte into D
+ENDC
+	call SGB_SetBackground01     ; Set SGB background
 
 ENDC
 
+	ld e, INTRO_SGB_DELAY      ; ~1 sec delay to make up for the SGB bootup animation
+.sleepLoop
+	rst WaitVBlank             ; Wait for the next VBlank
+	ld l, LOW(wPacketBuffer)   ; Clear lower address byte
+	call SGB_SetPalettes01     ; Set SGB palette
+	dec e                      ; Decrement the counter
+	jr nz, .sleepLoop          ; Continue to loop unless zero
+
+IF DEF(INTRO_FADEIN_SGB)
+
+.fadeInLoop
+	call FadeSGB               ; Update SGB palette
+	inc e                      ; Increment the step counter
+
+ASSERT(INTRO_FADEIN_SGB_LENGTH == 1 << TZCOUNT(INTRO_FADEIN_SGB_LENGTH))
+	bit TZCOUNT(INTRO_FADEIN_SGB_LENGTH) + 1, e
+	jr z, .fadeInLoop          ; If length not reached, continue to loop
+
+ENDC
+
+	ret
+
+
+SECTION "Sleep", ROM0
 Sleep:
 	rst WaitVBlank             ; Wait for the next VBlank
 	dec e                      ; Decrement the counter
@@ -928,34 +915,18 @@ Sleep:
 
 IF DEF(INTRO_FADEIN_SGB)
 
-SECTION "ReadLUT", ROM0
-ReadLUT:
+SECTION "FadeSGB", ROM0
+FadeSGB::
+	rst WaitVBlank             ; Wait for the next VBlank
+	ld hl, FadeInSGBLUT        ; Load LUT address into HL
+	ld a, e                    ; Load the step counter into A
 	add l                      ; Add lower address byte
 	ld l, a                    ; Load the result into L
 	res 0, l                   ; Clear the lowest bit
-	ld d, [hl]                 ; Load the foreground's lower byte into D
+	ld c, [hl]                 ; Load the backgrounds's lower byte into C
 	inc l                      ; Increment lower LUT address byte
-	ld a, [hl]                 ; Load the foreground's upper byte into A
-	ret
-
-ENDC
-
-
-IF DEF(INTRO_FADEOUT)
-
-ReadSGBLUT2:
-	add a                      ; Multiply by 2
-	add l                      ; Add lower address byte
-	ld l, a                    ; Load the result into L
-	res 1, l                   ; Clear the 2nd lowest bit
-	ld d, [hl]                 ; Load the background's lower byte into D
-	inc l                      ; Increment lower LUT address byte
-	ld c, [hl]                 ; Load the background's upper byte into C
-	inc l                      ; Increment lower LUT address byte
-	ld b, [hl]                 ; Load the foreground's lower byte into B
-	inc l                      ; Increment lower LUT address byte
-	ld a, [hl]                 ; Load the foreground's upper byte into A
-	ret
+	ld b, [hl]                 ; Load the backgrounds's upper byte into B
+	jp SGB_SetBackground01     ; Set SGB background and return
 
 ENDC
 
