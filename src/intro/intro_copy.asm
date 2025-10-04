@@ -10,10 +10,6 @@ include "intro.inc"
 
 SECTION FRAGMENT "Intro", ROM0
 CopyIntro:
-	ldh a, [rLY]               ; Read the LY register to check the current scanline
-	cp SCREEN_HEIGHT_PX        ; Compare the current scanline to the first scanline of VBlank
-	jr c, CopyIntro            ; Loop until the carry flag is set
-
 	ld hl, STARTOF(VRAM) | T_INTRO_REG << 4
 	ld de, RegTiles
 	COPY_1BPP_SAFE Reg         ; Copy ® tiles
