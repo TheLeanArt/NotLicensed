@@ -8,8 +8,8 @@ include "defs.inc"
 include "intro.inc"
 
 
-SECTION "CopyIntro", ROM0
-CopyIntro::
+SECTION FRAGMENT "Intro", ROM0
+CopyIntro:
 	ldh a, [rLY]               ; Read the LY register to check the current scanline
 	cp SCREEN_HEIGHT_PX        ; Compare the current scanline to the first scanline of VBlank
 	jr c, CopyIntro            ; Loop until the carry flag is set
@@ -34,16 +34,11 @@ CopyIntro::
 	ld hl, STARTOF(VRAM) | T_INTRO_TOP_O << 4
 	COPY_1BPP_SAFE TopO        ; Copy top O tiles
 
-IF T_INTRO_N0 == T_INTRO_E + 32
-	ld bc, Intro2Tiles.end - Intro1Tiles
-ELSE
-	ld bc, Intro1Tiles.end - Intro1Tiles
+	ld bc, IntroTiles.end - IntroTiles
 	call CopyPre2Safe
-	ld hl, STARTOF(VRAM) | T_INTRO_N0 << 4
-	ld bc, Intro2Tiles.end - Intro2Tiles
-ENDC
-	; Fall through
 
+
+SECTION "CopyPre2Safe", ROM0
 CopyPre2Safe:
 	rst WaitVRAM               ; Wait for VRAM to become accessible
 REPT 2
@@ -130,12 +125,9 @@ TopOTiles:
 	INCBIN "intro_top_o.1bpp"
 .end
 
-Intro1Tiles:
+IntroTiles:
 	_0_5_BPP "intro_n.1bpp"
 	_0_5_BPP "intro_e.1bpp"
-.end
-
-Intro2Tiles:
 	_0_5_BPP "intro_n0.1bpp"
 	_0_5_BPP "intro_d.1bpp"
 	_0_5_BPP "intro_o.1bpp"
