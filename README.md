@@ -15,8 +15,9 @@ The demo consists of three separate scenes:
 
 ## Platform-Specific Features
 
-* **Game Boy Colour:** B&W palette, multi-colour palettes for _Not licensed by_, gradient, fade-out
-* **Super Game Boy:** B&W palette, fade-out
+* **Game Boy Colour:** B&W palette, multi-colour palettes for _Not licensed by_, gradient, fade-in, fade-out
+* **Super Game Boy:** B&W palette, fade-in, fade-out
+* **DMG:** grayscale palette for _Not licensed by_, fade-out
 * **DMG0:** ® is invisible
 
 ## Flavours
