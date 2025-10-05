@@ -172,7 +172,6 @@ IF DEF(INTRO_SONG)
 ENDC
 
 	ldh a, [hFlags]            ; Load our flags into the A register
-	ld c, a                    ; Store the flags in the C register
 
 IF DEF(INTRO_FADEIN_GBC)
 
@@ -213,9 +212,18 @@ ENDC
 	call nz, IntroInitSGB      ; If yes, initialize SGB
 
 .drop
-	call InitReg               ; Initialize the ® object
+	ldh a, [hFlags]            ; Load our flags into the A register
+	bit B_FLAGS_DMG0, a        ; Are we running on DMG0?
+	jr nz, .dropCont           ; If yes, skip the ® object
+
+.initReg
+	ld bc, T_INTRO_REG << 8    ; Load tile ID and attributes
+	ld de, Y_INTRO_REG << 8 | X_INTRO_REG
+	ld hl, wShadowOAM + OBJ_INTRO_REG * OBJ_SIZE
+	call SetObject             ; Set the ® object
 	call hFixedOAMDMA          ; Prevent flicker
 
+.dropCont
 	ld e, 0                    ; Use E as our step counter
 	INIT_VRAM_HL REG2          ; Load the window ® address into the HL register
 	rst WaitVRAM               ; Wait for VRAM to become accessible
@@ -244,8 +252,9 @@ ENDC
 	ldh [rWY], a               ; Set the Y coordinate
 	res 7, e                   ; Go back to the first half-page
 
-	bit B_FLAGS_DMG0, c        ; Are we running on DMG0?
-	jr nz, .dropDone           ; If yes, skip the ® object
+	ldh a, [hFlags]            ; Load our flags into the A register
+	bit B_FLAGS_DMG0, a        ; Are we running on DMG0?
+	jr nz, .regDone            ; If yes, skip the ® object
 
 	inc d                      ; Advance to the next page
 	ld a, [de]                 ; Load the Y coordinate value
@@ -271,13 +280,10 @@ ENDC
 	ld [hl], a                 ; Set the new attributes
 .regDone
 
-IF DEF(COLOR8)
+IF DEF(INTRO_COLOR8)
 
-	ldh a, [hFlags]            ; Load our flags into the A register
-	bit B_FLAGS_GBC, a         ; Are we running on GBC?
-	jr z, .dropDone            ; If not, proceed to prevent lag
 	ld a, e                    ; Load the value in E into A
-	cp COLOR8_STEP             ; Coloration step reached?
+	cp INTRO_COLOR8_STEP       ; Coloration step reached?
 	call z, Color8             ; If yes, colorate
 
 ENDC
@@ -341,7 +347,7 @@ ASSERT (ROW_INTRO_TOP & 1)
 	ld [hl], a                 ; Clear any lingering Os
 
 .bShift
-	ld hl, STARTOF(VRAM) | T_INTRO_BY << 4
+	ld hl, STARTOF(VRAM) | T_INTRO_BY << 4 | 1
 	bit 2, e                   ; Shift B every 8th step
 	jr z, .yShift              ; If not on 8th step, skip to shifting Y
 
@@ -356,7 +362,7 @@ ASSERT (ROW_INTRO_TOP & 1)
 	jr z, .bLoop               ; If not, keep looping
 
 .yShift
-	ld l, LOW(T_INTRO_BY_1 << 4) | 1
+	ld l, LOW(T_INTRO_BY_1 << 4)
 
 .yLoop
 	rr [hl]                    ; Shift the middle tile to the right
@@ -648,19 +654,30 @@ SetLogo:
 
 
 SECTION "SetObject", ROM0
-InitReg:
-	ld b, T_INTRO_REG          ; Load tile ID
-	                           ; Compensate for width adjustment
-	ld de, Y_INTRO_REG << 8 | (X_INTRO_REG + 2)
-	ld hl, wShadowOAM + OBJ_INTRO_REG * OBJ_SIZE
-
-ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
-	ldh a, [hFlags]            ; Load our flags into the A register
-	and FLAGS_DMG0             ; Isolate the DMG0 flag
-	ld c, a                    ; Load attributes
+InitTop::
+	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE
+	ld bc, T_INTRO_TOP_0 << 8  ; Load tile ID and attributes
+	ld de, Y_INTRO_INIT << 8 | X_INTRO_TOP_0
+	call SetObject             ; Set the N object
+	ld e, X_INTRO_TOP_1        ; Load X coordinate
+	call SetObject             ; Set the T object
+	ld e, X_INTRO_TOP_2        ; Load X coordinate
+	call SetObject             ; Set the L object
+	ld e, X_INTRO_TOP_3        ; Load X coordinate
+	call SetObject             ; Set the I object
+	ld e, X_INTRO_TOP_4 + 2    ; Load X coordinate + adjust for SetNextTopObject
+	call SetNextTopObjectDouble; Set the C and E1 objects
+	call SetNextTopObjectDouble; Set the N and S objects
+IF !DEF(EN_GB)
+	dec e                      ; Adjust the X coordinate
+ENDC
 	; Fall through
 
-SetNextTopObject::
+SetNextTopObjectDouble:
+	call SetNextTopObject
+	; Fall through
+
+SetNextTopObject:
 	dec e                      ; Adjust width
 	dec e                      ; ...
 	; Fall through
@@ -709,56 +726,50 @@ SetDoubleObject:
 	jr SetObject.cont1         ; Proceed to set object
 
 
-IF DEF(COLOR8)
+IF DEF(INTRO_COLOR8)
 
 Color8:
-	ld b, 1                    ; Set the palette to 1
-	call SetByAttrs            ; Set attributes
+IF DEF(INTRO_COLOR8_DMG)
+	ld hl, rBGP
+	ld a, %11_10_11_00
+	ld [hli], a
+	ld a, %11_10_01_00
+	ld [hli], a
+	ld a, %01_11_10_00
+	ld [hl], a
+ENDC
 
+	ldh a, [hFlags]            ; Load our flags into the A register
+	ld b, 1                    ; Set the palette to 1
+	bit B_FLAGS_GBC, a         ; Are we running on GBC?
+	jr z, .nonGBC              ; If not, proceed to set top N0's tile ID
+	call SetByAttrs            ; If yes, set attributes
+	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_FLAGS
+	jr .cont
+
+.nonGBC
 	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_TILEID
 	ld a, T_INTRO_TOP_0_2
-	ld [hl], a
-
-	ld l, OBJ_INTRO_TOP_1 * OBJ_SIZE + OAMA_FLAGS
-	ld [hl], b
-
-	ld l, OBJ_INTRO_TOP_2 * OBJ_SIZE + OAMA_TILEID
-	inc a
 	ld [hli], a
-	ld [hl], b
 
-	ld l, OBJ_INTRO_TOP_3 * OBJ_SIZE + OAMA_TILEID
-	inc a
-	ld [hli], a
-	ld [hl], b
+.cont
 
-	ld l, OBJ_INTRO_TOP_4 * OBJ_SIZE + OAMA_TILEID
-	inc a
-	ld [hli], a
-	inc b
+FOR I, INTRO_TOP_COUNT
+IF I > 0
+	ld l, OBJ_INTRO_TOP_{d:I} * OBJ_SIZE + OAMA_FLAGS
+ENDC
+IF I % 3 == 1
+	IF DEF(INTRO_COLOR8_DMG) && I == 1
+		ld b, OAM_PAL1 | 2
+	ELIF DEF(INTRO_COLOR8_DMG) && I == 4
+		ld b, 3
+	ELSE
+		inc b
+	ENDC
+ENDC
 	ld [hl], b
+ENDR
 
-	ld l, OBJ_INTRO_TOP_5 * OBJ_SIZE + OAMA_TILEID
-	inc a
-	ld [hli], a
-	ld [hl], b
-
-	ld l, OBJ_INTRO_TOP_6 * OBJ_SIZE + OAMA_FLAGS
-	ld [hl], b
-
-	ld l, OBJ_INTRO_TOP_7 * OBJ_SIZE + OAMA_TILEID
-	ld a, T_INTRO_TOP_7_2
-	ld [hli], a
-	inc b
-	ld [hl], b
-
-	ld l, OBJ_INTRO_TOP_8 * OBJ_SIZE + OAMA_TILEID
-	ld a, T_INTRO_TOP_8_2
-	ld [hli], a
-	ld [hl], b
-
-	ld l, OBJ_INTRO_TOP_9 * OBJ_SIZE + OAMA_FLAGS
-	ld [hl], b
 	ret
 
 ENDC
@@ -799,15 +810,20 @@ SetPalettes::
 	call SetPalette
 	inc l
 
-IF DEF(COLOR8)
-	ld a, OBPI_AUTOINC | 4
+IF DEF(INTRO_COLOR8)
+	ld a, OBPI_AUTOINC
 	ld [hli], a
-	INIT_COLOR C_INTRO_TOP_0, 0
-	SET_COLOR C_INTRO_TOP_0, 0
+	SET_PALETTE C_INTRO_TOP_O, C_INTRO_BOTTOM, C_INTRO_BOTTOM, C_INTRO_BOTTOM
+	dec l
+
+	ld a, OBPI_AUTOINC | 12
+	ld [hli], a
 	INIT_COLOR C_INTRO_BOTTOM, C_INTRO_TOP_0
 	SET_COLOR C_INTRO_BOTTOM, C_INTRO_TOP_0
+	INIT_COLOR C_INTRO_TOP_0, C_INTRO_BOTTOM
+	SET_COLOR C_INTRO_TOP_0, C_INTRO_BOTTOM
 
-	SET_PALETTE C_INTRO_BOTTOM, C_INTRO_TOP_3, C_INTRO_TOP_2, C_INTRO_TOP_1
+	SET_PALETTE C_INTRO_BOTTOM, C_INTRO_TOP_2, C_INTRO_TOP_3, C_INTRO_TOP_1
 	SET_PALETTE C_INTRO_TOP_1, C_INTRO_TOP_4, C_INTRO_TOP_5, C_INTRO_TOP_6
 	SET_PALETTE C_INTRO_TOP_6, C_INTRO_TOP_7, C_INTRO_TOP_8, C_INTRO_TOP_9
 	ret
@@ -819,8 +835,8 @@ SetPalette:
 	ld a, BGPI_AUTOINC
 	ld [hli], a
 	INIT_COLOR_BACK
-	SET_PALETTE C_INTRO_BACK, C_INTRO_BOTTOM, C_INTRO_BOTTOM, C_INTRO_BOTTOM, C_INTRO_BOTTOM
-	SET_PALETTE C_INTRO_BOTTOM, C_INTRO_BY1, C_INTRO_BY2, C_INTRO_TOP_O
+	SET_PALETTE C_INTRO_BACK, C_INTRO_BOTTOM, C_INTRO_BOTTOM, C_INTRO_BOTTOM
+	SET_PALETTE C_INTRO_BOTTOM, C_INTRO_BY2, C_INTRO_BY1, C_INTRO_TOP_O
 	ret
 
 
@@ -887,9 +903,9 @@ FadeSGB::
 	add l                      ; Add lower address byte
 	ld l, a                    ; Load the result into L
 	res 0, l                   ; Clear the lowest bit
-	ld c, [hl]                 ; Load the backgrounds's lower byte into C
+	ld c, [hl]                 ; Load the background's lower byte into C
 	inc l                      ; Increment lower LUT address byte
-	ld b, [hl]                 ; Load the backgrounds's upper byte into B
+	ld b, [hl]                 ; Load the background's upper byte into B
 	jp SGB_SetBackground01     ; Set SGB background and return
 
 ENDC

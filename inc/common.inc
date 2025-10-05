@@ -43,21 +43,6 @@ ASSERT(!HIGH(\1Tiles.end - \1Tiles))
 	call Copy1bppSafe
 ENDM
 
-; @param \1 Tiles prefix
-MACRO COPY_1BPP_PRE_SAFE
-ASSERT(\1Tiles.end - \1Tiles <= 256)
-	ld b, LOW(\1Tiles.end - \1Tiles)
-.loop\@
-	rst WaitVRAM        ; Wait for VRAM to become accessible
-	ld a, [de]          ; Load a byte from the address DE points to into the A register
-	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
-	xor a               ; Clear the A register
-	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
-	inc de              ; Increment the source pointer in DE
-	dec b               ; Decrement the inner loop counter
-	jr nz, .loop\@      ; Stop if B is zero, otherwise keep looping
-ENDM
-
 ; @param \1 Page-aligned Tiles prefix
 MACRO COPY_2BPP
 ASSERT(HIGH(\1Tiles.end - \1Tiles))

@@ -43,12 +43,13 @@ The intro provides numerous customisation hooks via `defs.inc`. Following is a n
 * `INTRO_SONG`: hUGETracker song descriptor.
   * Uncomment `src/intro/intro_song.o` and `src/hUGEDriver.o` in Makefile (and then replace `intro_song` with your own song).
   * `INTRO_SONG_DELAY`: song delay in ticks.
-* `COLOR8`: enable multi-colour top letters on GBC.
+* `INTRO_COLOR8`: enable multi-coloured top letters on GBC/DMG.
   * `C_INTRO_TOP`: default top letters' colour.
   * `C_INTRO_TOP_`_n_: (0 <= _n_ <= 7): _n_-th top letter colour.
   * `C_INTRO_BY`: default _by_ letters' colour.
     * `C_INTRO_BY1`: _b_ letter colour.
     * `C_INTRO_BY2`: _y_ letter colour.
+  * `INTRO_COLOR8_DMG:` enable grayscale top letters on DMG.
 * `INTRO_GRADIENT`: enable background gradient on GBC.
   * `C_INTRO_GRADIENT_TOP`: gradient's top colour.
   * `C_INTRO_GRADIENT_BOTTOM`: gradient's bottom colour.
