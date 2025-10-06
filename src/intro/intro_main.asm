@@ -95,6 +95,9 @@ ENDM
 
 SECTION FRAGMENT "Intro", ROM0
 Intro:
+	call InitTop               ; Initialize top objects
+	call ClearOAM              ; Clear the remaining shadow OAM
+
 	INIT_VRAM_HL LOGO          ; Load the background logo address into the HL register
 	call ClearLogo             ; Clear the logo from the background
 	call InitOAndBy            ; Draw top O and BY on the background
@@ -654,7 +657,7 @@ SetLogo:
 
 
 SECTION "SetObject", ROM0
-InitTop::
+InitTop:
 	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE
 	ld bc, T_INTRO_TOP_0 << 8  ; Load tile ID and attributes
 	ld de, Y_INTRO_INIT << 8 | X_INTRO_TOP_0
@@ -744,18 +747,19 @@ ENDC
 	bit B_FLAGS_GBC, a         ; Are we running on GBC?
 	jr z, .nonGBC              ; If not, proceed to set top N0's tile ID
 	call SetByAttrs            ; If yes, set attributes
-	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_FLAGS
 	jr .cont
 
 .nonGBC
 	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_TILEID
-	ld a, T_INTRO_TOP_0_2
-	ld [hli], a
+ASSERT (T_INTRO_TOP_0_2 == T_INTRO_TOP_0 - 1)
+	dec [hl]                   ; Set top N0 to dark
 
 .cont
 
 FOR I, INTRO_TOP_COUNT
-IF I > 0
+IF I == 0
+	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_FLAGS
+ELSE
 	ld l, OBJ_INTRO_TOP_{d:I} * OBJ_SIZE + OAMA_FLAGS
 ENDC
 IF I % 3 == 1
@@ -781,7 +785,8 @@ InitOAndBy:
 	call .do                   ; Set O's tiles
 	ld l, ROW_INTRO_BY * TILEMAP_WIDTH + COL_INTRO_BY
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ld a, T_INTRO_BY           ; Load left tile ID
+ASSERT (T_INTRO_BY == T_INTRO_TOP_9 + 1)
+	ld a, b                    ; Load left tile ID
 	ld [hli], a                ; Set left tile
 	ld a, T_INTRO_BY_1         ; Load middle tile ID
 .do

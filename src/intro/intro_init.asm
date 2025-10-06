@@ -16,6 +16,3 @@ IF !DEF(INTRO_FADEIN_GBC)
 	bit B_FLAGS_GBC, a         ; Are we running on GBC?
 	call nz, SetPalettes       ; If yes, set SGB palettes
 ENDC
-
-	call InitTop               ; Initialize top objects
-	call ClearOAM              ; Clear the remaining shadow OAM

@@ -10,10 +10,11 @@ include "intro.inc"
 
 SECTION FRAGMENT "Intro", ROM0
 CopyIntro:
-	ld hl, STARTOF(VRAM) | T_INTRO_REG << 4
-	ld de, RegTiles
-	COPY_1BPP_SAFE Reg         ; Copy ® tiles
+	ld hl, STARTOF(VRAM) | T_INTRO_TOP_0_2 << 4
+	ld de, TopTiles
+	call Copy1bppPost          ; Copy dark top N0
 
+	ld e, LOW(TopTiles)        ; Move back to start
 	call Copy1bppSingle        ; Copy top N0
 	call Copy1bppTriplet       ; Copy top T, L and I
 	call Copy1bppPair          ; Copy top C and E1
@@ -21,12 +22,13 @@ CopyIntro:
 	call Copy1bppSingle        ; Copy top D
 
 	call Copy1bppPost          ; Copy B
-	call Copy1bppPost          ; Copy dark top N0
+	call FillSafe              ; Clear the odd tile after B
 	call Copy2bppEven          ; Copy Y
 	call FillSafe              ; Clear the odd tile after Y
 
-	ld hl, STARTOF(VRAM) | T_INTRO_TOP_O << 4
-	COPY_1BPP_SAFE TopO        ; Copy top O tiles
+	COPY_1BPP_SAFE Reg         ; Copy ® tiles
+
+	call CopyTopOTiles         ; Copy top O tiles
 
 	ld bc, IntroTiles.end - IntroTiles
 .loop
@@ -44,7 +46,7 @@ ENDR
 
 SECTION "Copy1bppSafe", ROM0
 Copy1bppSingle:
-	ld b, 8
+	ld b, TILE_SIZE >> 1       ; Copy a single tile
 	; Fall through
 
 Copy1bppSafe:
@@ -64,7 +66,7 @@ Copy1bppTriplet:
 	; Fall through
 
 Copy1bppPair:
-	ld b, 8
+	ld b, TILE_SIZE >> 1       ; Copy a single tile
 .loop
 	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld a, [de]                 ; Load a byte from the address DE points to into the A register
@@ -77,7 +79,7 @@ Copy1bppPair:
 	; Fall through
 
 Copy1bppPost:
-	ld b, 8
+	ld b, TILE_SIZE >> 1       ; Copy a single tile
 .loop
 	rst WaitVRAM               ; Wait for VRAM to become accessible
 	xor a                      ; Clear the A register
@@ -102,6 +104,24 @@ Copy2bppEven:
 
 
 SECTION "FillSafe", ROM0
+CopyTopOTiles:
+	ld b, TopO2Tiles.end - TopO2Tiles
+	call Copy1bppSafe          ; Copy the first nine tile, then clear one
+	call Copy1bppDoubleAndFill ; Copy the next two tile, then clear one
+	; Fall through
+
+Copy1bppDoubleAndFill:
+	call Copy1bppSingleAndFill ; Copy the next tile, then clear one
+	; Fall through
+
+Copy1bppSingleAndFill:
+	ld b, TILE_SIZE >> 1       ; Copy a single tile
+	; Fall through
+
+Copy1bppAndFill:
+	call Copy1bppSafe          ; Copy as black
+	; Fall through
+
 FillSafe:
 	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
@@ -111,10 +131,6 @@ FillSafe:
 
 
 SECTION "Intro Tile data", ROM0, ALIGN[8]
-RegTiles:
-	INCBIN "intro_reg.1bpp"
-.end
-
 TopTiles:
 	INCBIN "intro_top_n.1bpp"
 	INCBIN "intro_top_t.1bpp"
@@ -130,11 +146,18 @@ ByTiles:
 FOR I, 0, 16, 2
 	INCBIN "intro_by.2bpp", I + 1, 1
 ENDR
-	INCBIN "intro_top_n.1bpp"
 	INCBIN "intro_by.2bpp", 16, 16
 
-TopOTiles:
-	INCBIN "intro_top_o.1bpp"
+RegTiles:
+	INCBIN "intro_reg.1bpp"
+.end
+
+TopO2Tiles:
+	INCBIN "intro_top_o_2.1bpp"
+.end
+
+TopO1Tiles:
+	INCBIN "intro_top_o_1.1bpp"
 .end
 
 IntroTiles:

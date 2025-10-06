@@ -99,17 +99,17 @@ DEF INTRO_TOP_COUNT      EQU  10
 
 DEF T_LOGO               EQU $01
 DEF T_REG                EQU $19
-DEF T_INTRO_REG          EQU T_REG             +  1
 
-DEF T_INTRO_TOP_0        EQU T_INTRO_REG       +  4
+DEF T_INTRO_TOP_0_2      EQU $1D
+DEF T_INTRO_TOP_0        EQU T_INTRO_TOP_0_2  +  1
 FOR I, 1, INTRO_TOP_COUNT
 DEF _ = I - 1
 	DEF T_INTRO_TOP_{d:I}    EQU T_INTRO_TOP_{d:_} +  1
 ENDR
 
 DEF T_INTRO_BY           EQU T_INTRO_TOP_9     +  1
-DEF T_INTRO_TOP_0_2      EQU T_INTRO_BY        +  1
-DEF T_INTRO_BY_1         EQU T_INTRO_TOP_0_2   +  1
+DEF T_INTRO_BY_1         EQU T_INTRO_BY        +  2
+DEF T_INTRO_REG          EQU T_INTRO_BY_1      +  2
 
 DEF T_INTRO_TOP_O        EQU $30
 DEF T_INTRO_N            EQU T_INTRO_TOP_O     + 16

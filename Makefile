@@ -39,7 +39,8 @@ INTRO_INC = \
 	inc/intro.inc \
 
 INTRO_1BPP = \
-	art/intro/intro_top_o.1bpp \
+	art/intro/intro_top_o_2.1bpp \
+	art/intro/intro_top_o_1.1bpp \
 	art/intro/intro_top_n.1bpp \
 	art/intro/intro_top_t.1bpp \
 	art/intro/intro_top.1bpp \
@@ -75,7 +76,7 @@ src/start.o: src/start.asm $(INC) $(INTRO_INC)
 %.o: %.asm $(INC)
 	$(RGBASM) $(RGBASMFLAGS) $< -o $@
 
-art/intro/intro_top_o.1bpp: art/intro/intro_top_o.png
+art/intro/intro_top_o_2.1bpp: art/intro/intro_top_o_2.png
 	$(RGBGFX) -d1 $< -o $@
 
 art/intro/%.1bpp: art/intro/%.png
